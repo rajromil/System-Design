@@ -104,4 +104,8 @@ int main(){
     schrodinger->accelerate();
     schrodinger->brake();
     schrodinger->stopEngine();
+
+    delete schrodinger;
+
+    return 0;
 }
