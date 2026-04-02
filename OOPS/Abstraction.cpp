@@ -26,6 +26,21 @@ class Car{
     virtual ~Car() {}
 };
 
+/*
+1. This is a Concrete class (A class that provide implementation details of an abstract class).
+Now anyone can make an Object of 'SportsCar' and can assign it to 'Car' (Parent class) pointer 
+(See main method for this)
+
+2. In our real world example of Car, as you cannot have a real car by just having its body only
+(all these buttons or steering wheel). You need to have the actual implementation of 'What' happens
+when we press these buttons. 'SportsCar' class denotes that actual implementation. 
+
+3. Therefore, to denote a real world car in programming we created 2 classes.
+One to denote all the user-interface like pedals, buttons, steering wheels etc ('Car' class).And,
+Another one to denote the actual car with all the implementations of these buttons (SportsCar' class).
+ 
+*/
+
 class SportsCar : public Car{
     public:
     string brand;
