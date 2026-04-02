@@ -32,6 +32,7 @@ class SportsCar{
     }
 
     void setTyreCompany(string tyre){
+        //can add a lot of check here i.e better than directly from main 
         this->tyre=tyre;
     }
 
@@ -71,7 +72,7 @@ int main(){
     SportsCar* schrodinger=new SportsCar("BMW","M4");
 
 
-    // mySportsCar->currentSpeed = 500;
+    // mySportsCar->currentSpeed = 500;->this gives error as it is a private variable
 
     cout<<schrodinger->getTyreCompany()<<endl;
     schrodinger->startEngine();
