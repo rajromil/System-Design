@@ -83,4 +83,8 @@ int main(){
     schrodinger->stopEngine();
     schrodinger->setTyreCompany("TVS");
     cout<<schrodinger->getTyreCompany()<<endl;
+
+    delete schrodinger;
+
+    return 0;
 }
