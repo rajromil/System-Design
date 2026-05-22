@@ -24,6 +24,17 @@ When you build a project in college, your setup typically looks like this:
 [ Database (MySQL / MongoDB / PostgreSQL) ]
 ```
 
+```mermaid
+flowchart TD
+    C["Client (Browser / App)"]
+    S["Backend Server"]
+    D[("Database")]
+    C -->|"HTTP Request"| S
+    S -->|"CRUD"| D
+    D -->|"Data"| S
+    S -->|"HTTP Response"| C
+```
+
 - Client sends a request (e.g., "Get me the list of products")
 - Backend processes the request (calculations, business logic)
 - Backend talks to the Database to fetch/store data
@@ -200,10 +211,18 @@ When you type `https://google.com`, your browser automatically uses port **443**
 
 **Visual flow:**
 
-```
-Browser → DNS Cache → OS hosts file → DNS Resolver
-→ Root NS → TLD NS → Authoritative NS → IP returned
-→ Browser connects to server
+```mermaid
+flowchart TD
+    Start(["User enters abc.com"]) --> BC{"Browser DNS\ncache hit?"}
+    BC -->|Yes| IP["Return IP address"]
+    BC -->|No| OS{"OS cache or\nhosts file?"}
+    OS -->|Yes| IP
+    OS -->|No| DR["DNS Resolver\n(8.8.8.8 / 1.1.1.1)"]
+    DR --> Root["Root Name Server"]
+    Root --> TLD["TLD Server (.com)"]
+    TLD --> Auth["Authoritative NS\nfor abc.com"]
+    Auth --> IP
+    IP --> Conn["Browser connects\n35.154.33.64:443"]
 ```
 
 #### DNS record types (common ones)
@@ -512,6 +531,15 @@ If you have more concurrent users and the same throughput, **latency increases**
 
 As load increases, latency stays low until the system approaches its throughput limit. Then latency increases rapidly.
 
+```mermaid
+flowchart TD
+    Load["Requests per second increase"] --> Cap{"Below system\ncapacity?"}
+    Cap -->|Yes| Stable["Latency stays low"]
+    Cap -->|No| Sat["Saturation point"]
+    Sat --> Spike["Latency rises sharply"]
+    Stable --> Goal["Goal: scale throughput\nbefore saturation"]
+```
+
 ```
 Latency
 │                              *
@@ -584,6 +612,18 @@ Amazon found that every **100ms** of latency costs them **1%** in sales.
 ## Section 5 — Putting It All Together
 
 ### 5.1 How These Concepts Connect
+
+```mermaid
+flowchart TD
+    A["Build app on laptop"] --> B["Deploy to cloud VM\n(EC2, Droplet, etc.)"]
+    B --> C["Domain name → DNS → Public IP"]
+    C --> D["Port routes to correct app"]
+    D --> E["Request processing = Latency"]
+    E --> F["Many concurrent users = Throughput"]
+    F --> G{"Traffic grows?"}
+    G -->|Yes| H["Apply system design:\nscale, cache, CDN, replicas"]
+    G -->|No| OK["Simple 3-tier may suffice"]
+```
 
 ```
 You build an app (code on laptop)
