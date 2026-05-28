@@ -186,16 +186,16 @@ Instead of waiting for TTL to expire, you actively delete or update the cache th
 SCENARIO: New blog post published.
 
 WITHOUT ACTIVE INVALIDATION:
-  - New blog saved to database ✅
+  - New blog saved to database
   - Cache still has old blog list ← STALE
   - Users see old list until TTL expires (could be 23 hours!)
   - "Where's my new blog? I just published it!" — author is confused
 
 WITH ACTIVE INVALIDATION:
-  - New blog saved to database ✅
+  - New blog saved to database
   - Server immediately: DEL blogData (deletes from Redis)
   - Next user to request /blogs → Cache MISS → fetches fresh data with new blog
-  - Cache repopulated with new data ✅
+  - Cache repopulated with new data
   - All subsequent users see the new blog immediately
 
 Code flow:
@@ -392,19 +392,19 @@ doesn't have the content yet.
 
 ```
 CACHE AT CDN (static content that doesn't change per user):
-  ✅ Images (product photos, logos, banners)
-  ✅ Videos
-  ✅ CSS, JavaScript bundles
-  ✅ Fonts
-  ✅ Static HTML pages
-  ✅ PDF files, downloadable content
+  - Images (product photos, logos, banners)
+  - Videos
+  - CSS, JavaScript bundles
+  - Fonts
+  - Static HTML pages
+  - PDF files, downloadable content
 
 DO NOT CACHE AT CDN (dynamic content specific to a user):
-  ❌ User's dashboard ("Hello, Rahul! Your orders: ...")
-  ❌ Shopping cart contents
-  ❌ Authentication tokens or session data
-  ❌ Payment pages
-  ❌ Any page showing personalized data
+  - User's dashboard ("Hello, Rahul! Your orders: ...")
+  - Shopping cart contents
+  - Authentication tokens or session data
+  - Payment pages
+  - Any page showing personalized data
 ```
 
 ### 4. Application-Level Cache
@@ -436,17 +436,17 @@ async function getExpensiveComputationResult(input) {
 
 ```
 Application-Level Cache (in-process Map/Dict):
-  ✅ Absolute fastest — no network call, just memory lookup
-  ❌ Lost when server restarts
-  ❌ NOT shared across multiple server instances
-  ✅ Good for: Config values, compiled regex patterns
+  + Absolute fastest — no network call, just memory lookup
+  - Lost when server restarts
+  - NOT shared across multiple server instances
+  + Good for: Config values, compiled regex patterns
 
 Redis (out-of-process):
-  ✅ Shared across all server instances
-  ✅ Survives server restarts (with persistence)
-  ✅ Has TTL support, rich data types, pub/sub
-  ❌ Requires a network call (still very fast: 1-5ms)
-  ✅ Good for: Session data, shared computed results
+  + Shared across all server instances
+  + Survives server restarts (with persistence)
+  + Has TTL support, rich data types, pub/sub
+  - Requires a network call (still very fast: 1-5ms)
+  + Good for: Session data, shared computed results
 ```
 
 ---

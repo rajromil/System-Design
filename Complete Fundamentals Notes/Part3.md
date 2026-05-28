@@ -334,7 +334,7 @@ sequenceDiagram
     Note over M,B: t=4 — Partition heals
     M->>H: Sync age = 22
     M->>B: Sync age = 22
-    Note over M,B: t=7 — All nodes: age = 22 ✓
+    Note over M,B: t=7 — All nodes: age = 22 (consistent)
 ```
 
 ```
@@ -605,19 +605,19 @@ AFTER PARTITIONING BY ID RANGE:
 │    user_table_1      │
 │  IDs: 1 to 3 billion │
 │   (3 billion rows)   │
-│   Smaller index ✅   │
+│   Smaller index      │
 └──────────────────────┘
 ┌──────────────────────┐
 │    user_table_2      │
 │  IDs: 3B to 6 billion│
 │   (3 billion rows)   │
-│   Smaller index ✅   │
+│   Smaller index      │
 └──────────────────────┘
 ┌──────────────────────┐
 │    user_table_3      │
 │  IDs: 6B to 10 billion│
 │   (4 billion rows)   │
-│   Smaller index ✅   │
+│   Smaller index      │
 └──────────────────────┘
 
 All 3 partitions sit on the same server.

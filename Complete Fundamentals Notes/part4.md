@@ -914,12 +914,12 @@ Scenario: The Recommendation Service has a memory leak bug.
 
 WITH MICROSERVICES:
 t=0:  Recommendation Service crashes.
-      User, Product, Order, Payment services: ✅ still running.
+      User, Product, Order, Payment services: still running.
       Impact: "You might also like..." missing — site still works.
 
 WITH MONOLITH:
 t=0:  Recommendation module leaks memory → entire app crashes.
-      Login, products, checkout, payments: ❌ all down.
+      Login, products, checkout, payments: all down.
 ```
 
 ### Technology Flexibility — Each Service Uses the Best Tool
@@ -1204,7 +1204,7 @@ server_index = HASH(client_IP) % number_of_servers
 ```
 Request 1: Server-1 writes cart to Redis
 Request 2: Server-2 reads Redis, adds item
-Request 3: Server-3 reads Redis — cart correct ✅
+Request 3: Server-3 reads Redis — cart correct
 
 Now use Round Robin or Least Connections freely.
 Stateless servers + shared cache = best practice.

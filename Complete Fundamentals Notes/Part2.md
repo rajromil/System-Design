@@ -359,9 +359,9 @@ Every few seconds (say every 5 seconds), the load balancer sends a small "are yo
 
 ```
 Health check cycle (every 5 seconds):
-Load Balancer → pings Server 1 → Server 1 responds "200 OK" → Healthy ✅
-Load Balancer → pings Server 2 → Server 2 responds "200 OK" → Healthy ✅
-Load Balancer → pings Server 3 → No response after 3s timeout → Unhealthy ❌
+Load Balancer → pings Server 1 → Server 1 responds "200 OK" → Healthy (OK)
+Load Balancer → pings Server 2 → Server 2 responds "200 OK" → Healthy (OK)
+Load Balancer → pings Server 3 → No response after 3s timeout → Unhealthy (removed from pool)
 
 Load Balancer now routes ALL traffic to Server 1 and Server 2 only.
 Server 3 is removed from the pool.
@@ -381,9 +381,9 @@ This is why horizontal scaling gives you high availability. No single server fai
 ```mermaid
 flowchart TD
     HC["Health check every 5s"]
-    S1["Server 1 ✅ Healthy"]
-    S2["Server 2 ✅ Healthy"]
-    S3["Server 3 ❌ No response"]
+    S1["Server 1 — Healthy"]
+    S2["Server 2 — Healthy"]
+    S3["Server 3 — No response"]
     LB["Load Balancer"]
     U["Incoming traffic"]
 
