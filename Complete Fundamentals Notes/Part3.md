@@ -1559,4 +1559,4 @@ flowchart TD
 | Multi-Master | Regional writes — conflict resolution is hard |
 | Sharding | Split data across DB servers — avoid cross-shard JOINs |
 
-**Previous ←** [Chapter 2: Scaling & Estimation](Part2.md)
+**Previous ←** [Chapter 2: Scaling & Estimation](Part2.md) · **Next →** [Chapter 4: SQL/NoSQL, Microservices & Load Balancing](Part4.md)
