@@ -1,4 +1,14 @@
-# Caching — The Complete Deep Dive
+# System Design — Detailed Personal Notes (Chapter 5)
+
+**Topics:** Caching, Redis, invalidation strategies, cache-aside / write-through / write-back, production pitfalls
+
+These notes continue from [Chapter 4 — SQL/NoSQL, Microservices & Load Balancing](Part4.md). Every concept is explained from first principles with real-world analogies, diagrams, and worked examples.
+
+**Previous ←** [Chapter 4: SQL/NoSQL, Microservices & Load Balancing](Part4.md)
+
+---
+
+# PART 1: CACHING — The Complete Deep Dive
 
 ## Why Caching Exists — Building The Intuition From Scratch
 
@@ -789,3 +799,21 @@ Priority order for caching:
 7. Single-record lookups
 
 That's caching from first principles through production patterns: hit/miss, invalidation, Redis structures, failure modes, and operational considerations.
+
+---
+
+## Quick Reference — Chapter 5
+
+| Concept | One-line summary |
+|---------|------------------|
+| Cache hit | Data in cache — fast path, DB untouched |
+| Cache miss | Fetch from DB, populate cache, then respond |
+| TTL | Auto-expire stale data — simple, may show old data briefly |
+| Cache-aside | App reads cache first; on write, invalidate cache |
+| Write-through | Write to DB and cache together — always fresh |
+| Write-back | Write cache first, DB later — fast but risky |
+| Redis | In-memory key-value store — sub-ms reads, rich types |
+| Stampede | Many misses at once — use locks, jitter, early refresh |
+| Hot key | One key overloaded — local cache or key replicas |
+
+**Previous ←** [Chapter 4: SQL/NoSQL, Microservices & Load Balancing](Part4.md)

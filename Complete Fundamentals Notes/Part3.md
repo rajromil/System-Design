@@ -4,6 +4,8 @@
 
 These notes continue from [Chapter 2 — Scaling & Estimation](Part2.md). Every concept is explained from first principles with real-world analogies, diagrams, and worked examples.
 
+**Previous ←** [Chapter 2: Scaling & Estimation](Part2.md) · **Next →** [Chapter 4: SQL/NoSQL, Microservices & Load Balancing](Part4.md)
+
 ---
 
 ## Table of Contents

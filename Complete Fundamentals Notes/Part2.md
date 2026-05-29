@@ -4,7 +4,7 @@
 
 These notes continue from [Chapter 1](Part1.md). Every concept is explained from first principles with real-world analogies, diagrams, and worked examples.
 
-**Next:** [Chapter 3 — CAP Theorem & Database Scaling](Part3.md)
+**Previous ←** [Chapter 1: Intro, Servers & Deployment](Part1.md) · **Next →** [Chapter 3: CAP Theorem & Database Scaling](Part3.md)
 
 ---
 
@@ -920,4 +920,4 @@ flowchart LR
 | Memory shortcut | 1 day ≈ 100,000 sec; 2^10 ≈ 10^3 (KB, MB, GB…) |
 | Read:Write ratio | Drives caching, replicas, CDN — identify it early |
 
-**Continue →** [Chapter 3: CAP Theorem & Database Scaling](Part3.md)
+**Previous ←** [Chapter 1: Intro, Servers & Deployment](Part1.md) · **Next →** [Chapter 3: CAP Theorem & Database Scaling](Part3.md)

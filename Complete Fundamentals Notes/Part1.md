@@ -4,6 +4,8 @@
 
 These notes are written for self-study and revision. Every concept is explained from scratch with real-world analogies, examples, diagrams, and edge cases so you never have to Google the basics again.
 
+**Next →** [Chapter 2: Scaling & Estimation](Part2.md)
+
 ---
 
 ## Section 1 — Why Study System Design?
@@ -826,4 +828,4 @@ Rough numbers for system design interviews:
 
 ## End of Chapter 1
 
-**Next topics:** Load Balancing, Caching, Databases, CAP Theorem
+**Next →** [Chapter 2: Scaling & Estimation](Part2.md)

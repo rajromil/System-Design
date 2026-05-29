@@ -4,6 +4,8 @@
 
 These notes continue from [Chapter 3 — CAP & Database Scaling](Part3.md). Every concept is explained from first principles with real-world analogies, diagrams, and worked examples.
 
+**Previous ←** [Chapter 3: CAP & Database Scaling](Part3.md) · **Next →** [Chapter 5: Caching & Redis](Part5.md)
+
 ---
 
 ## Table of Contents
@@ -1260,4 +1262,4 @@ flowchart TD
 | Round Robin | Simple cycle — uniform workloads only |
 | Least Connections | Route to least busy — variable workloads |
 
-**Previous ←** [Chapter 3: CAP & Database Scaling](Part3.md)
+**Previous ←** [Chapter 3: CAP & Database Scaling](Part3.md) · **Next →** [Chapter 5: Caching & Redis](Part5.md)
