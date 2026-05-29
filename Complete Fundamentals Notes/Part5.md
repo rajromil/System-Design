@@ -4,7 +4,7 @@
 
 These notes continue from [Chapter 4 — SQL/NoSQL, Microservices & Load Balancing](Part4.md). Every concept is explained from first principles with real-world analogies, diagrams, and worked examples.
 
-**Previous ←** [Chapter 4: SQL/NoSQL, Microservices & Load Balancing](Part4.md)
+**Previous ←** [Chapter 4: SQL/NoSQL, Microservices & Load Balancing](Part4.md) · **Next →** [Chapter 6: Blob Storage, CDN & Message Brokers](Part6.md)
 
 ---
 
@@ -816,4 +816,4 @@ That's caching from first principles through production patterns: hit/miss, inva
 | Stampede | Many misses at once — use locks, jitter, early refresh |
 | Hot key | One key overloaded — local cache or key replicas |
 
-**Previous ←** [Chapter 4: SQL/NoSQL, Microservices & Load Balancing](Part4.md)
+**Previous ←** [Chapter 4: SQL/NoSQL, Microservices & Load Balancing](Part4.md) · **Next →** [Chapter 6: Blob Storage, CDN & Message Brokers](Part6.md)
