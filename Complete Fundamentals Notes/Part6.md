@@ -4,7 +4,7 @@
 
 These notes continue from [Chapter 5 — Caching & Redis](Part5.md). Every concept is explained from first principles with real-world analogies, diagrams, and worked examples.
 
-**Previous ←** [Chapter 5: Caching & Redis](Part5.md)
+**Previous ←** [Chapter 5: Caching & Redis](Part5.md) · **Next →** [Chapter 7: Kafka Internals & Pub/Sub](Part7.md)
 
 ---
 
@@ -656,4 +656,4 @@ Each tool solves one problem. Together they scale to millions of users.
 | DLQ | Failed messages after retries — inspect and replay |
 | REST vs broker | Need answer now → REST; background/resilient → broker |
 
-**Previous ←** [Chapter 5: Caching & Redis](Part5.md)
+**Previous ←** [Chapter 5: Caching & Redis](Part5.md) · **Next →** [Chapter 7: Kafka Internals & Pub/Sub](Part7.md)
