@@ -1,8 +1,9 @@
 # SOLID Principles — Design Notes
 
-> **Work in progress:** These notes are **not complete yet**. More principles (I — Interface Segregation, D — Dependency Inversion), examples, and revisions are coming. Treat this as a living document that will be updated as lecture material is added.
+> **Audience:** Software Engineers, Architects, and Interview Candidates  
+> **Perspective:** Professional, third-person, comprehensive, and highly practical.  
 
-These notes explain **why** each SOLID principle exists, using the lecture’s class-diagram examples. Each section shows a **bad design**, the **problem**, and a **better design** you can substitute in interviews and low-level design docs.
+These notes explain **why** each SOLID principle exists, using class-diagram examples. Each section shows a **bad design**, the **problem**, and a **better design** you can substitute in interviews and low-level design docs. They also explore the theoretical underpinnings, mechanical rules, and practical trade-offs of Object-Oriented Design.
 
 ---
 
@@ -13,10 +14,9 @@ These notes explain **why** each SOLID principle exists, using the lecture’s c
 | [S — Single Responsibility](#s--single-responsibility-principle-srp) | One class, one reason to change |
 | [O — Open/Closed](#o--open-closed-principle-ocp) | Extend behavior without editing existing code |
 | [L — Liskov Substitution](#l--liskov-substitution-principle-lsp) | Subtypes must honor the parent’s contract |
-| ↳ [Four rules of LSP](#the-four-rules-of-lsp) | Signature, return type, exception, property |
-| ↳ [Account hierarchy example](#design-example--account-hierarchy) | Split withdrawable vs non-withdrawable |
-| ↳ [LSP checklist](#lsp-checklist-before-using-inheritance) | Questions before choosing inheritance |
-| [Visual revision](#visual-revision) | All three at a glance |
+| [I — Interface Segregation](#i--interface-segregation-principle-isp) | Don't force clients to depend on things they don't use |
+| [D — Dependency Inversion](#d--dependency-inversion-principle-dip) | Depend on abstractions, not concretions |
+| [Final Thoughts & Trade-Offs](#final-thoughts--trade-offs) | SOLID as guidelines, not laws |
 
 ---
 
@@ -28,7 +28,7 @@ These notes explain **why** each SOLID principle exists, using the lecture’s c
 
 > **A class should do only one thing.**
 
-A *reason to change* = a stakeholder or area of the system (UI, business rules, database, reporting). If two unrelated changes both force edits to the same class, SRP is violated.
+A *reason to change* corresponds to a stakeholder or area of the system (e.g., UI, business rules, database, reporting). If two unrelated changes both force edits to the same class, SRP is violated.
 
 ---
 
@@ -48,9 +48,9 @@ ShoppingCart ----> Product
 ```mermaid
 classDiagram
     class ShoppingCart {
-        +calculateTotalPrice()
-        +printInvoice()
-        +saveToDB()
+        +calculateTotalPrice() double
+        +printInvoice() void
+        +saveToDB() void
     }
     class Product {
         +String name
@@ -69,25 +69,13 @@ The `ShoppingCart` class has **multiple responsibilities**:
 | Presentation | `printInvoice()` | Invoice layout, PDF vs console |
 | Persistence | `saveToDB()` | SQL → Mongo, schema, connection |
 
-Changes in **any** of these areas modify the same class → harder to test, review, and deploy independently.
-
-```mermaid
-flowchart TD
-    SC["ShoppingCart"]
-    BL["Pricing / tax rules change"]
-    UI["Invoice format change"]
-    DB["Database or schema change"]
-
-    BL --> SC
-    UI --> SC
-    DB --> SC
-
-    style SC fill:#fee,stroke:#c00
-```
+Changes in **any** of these areas modify the same class. This makes the class harder to test, review, and deploy independently. A bug introduced by changing the invoice format might inadvertently break the tax calculation.
 
 ---
 
 ## Better Design
+
+Split the responsibilities into distinct, highly cohesive classes.
 
 ```text
 Product
@@ -119,13 +107,13 @@ classDiagram
         +double price
     }
     class ShoppingCart {
-        +calculateTotalPrice()
+        +calculateTotalPrice() double
     }
     class InvoicePrinter {
-        +printInvoice(cart)
+        +printInvoice(cart) void
     }
     class DBStorage {
-        +saveToDB(cart)
+        +saveToDB(cart) void
     }
     ShoppingCart "1..*" --> Product : contains
 ```
@@ -133,26 +121,20 @@ classDiagram
 ### Responsibilities
 
 ```text
-ShoppingCart      → Cart calculations only
-InvoicePrinter    → Invoice generation / output only
-DBStorage         → Data persistence only
+ShoppingCart      → Cart calculations only (Finance Actor)
+InvoicePrinter    → Invoice generation / output only (UX Actor)
+DBStorage         → Data persistence only (DB Actor)
 ```
 
-Each class now has **one reason to change**.
+Each class now has exactly **one reason to change**.
 
-```mermaid
-flowchart LR
-    SC["ShoppingCart"]
-    IP["InvoicePrinter"]
-    DB["DBStorage"]
+### Key Takeaways & Things to Check
 
-    SC -->|"total"| IP
-    SC -->|"cart data"| DB
-
-    style SC fill:#efe,stroke:#060
-    style IP fill:#eef,stroke:#336
-    style DB fill:#eef,stroke:#336
-```
+* **Identify the Actors:** Ask yourself, "Who is asking for this feature?" If a class serves multiple actors (e.g., UI and Database), it violates SRP.
+* **Watch for Name Clues:** Classes with names containing "And", "Or", "Manager", or "Processor" often do too much.
+* **Check the Imports:** If a class imports UI libraries, database drivers, and business logic utilities all at once, it's a red flag.
+* **Testability:** If setting up a unit test for one method requires mocking dependencies completely unrelated to that method, split the class.
+* **Cohesion:** Ensure all methods in the class heavily use the class's fields. If methods are isolated to specific fields, extract them into a new class.
 
 ---
 
@@ -162,7 +144,7 @@ flowchart LR
 
 > **Software entities should be open for extension but closed for modification.**
 
-You should add new behavior by **adding** new code (new classes, new plugins), not by **changing** code that already works and is tested.
+You should add new behavior by **adding** new code (e.g., new classes, new plugins), not by **changing** code that already works and is tested.
 
 ---
 
@@ -171,7 +153,7 @@ You should add new behavior by **adding** new code (new classes, new plugins), n
 ```text
 DBStorage
 │
-└── saveToDB()
+└── saveToDB(type)
 ```
 
 Later requirements:
@@ -182,24 +164,29 @@ saveToMongo()
 saveToFile()
 ```
 
-Every new storage type means opening `DBStorage` and adding another method or another `if/else` branch.
+Every new storage type means opening the `DBStorage` class and adding another method or another `if/else` branch.
 
-```mermaid
-flowchart TD
-    REQ["New storage: Redis"]
-    DB["DBStorage class"]
-    REQ -->|"must edit existing code"| DB
-
-    style DB fill:#fee,stroke:#c00
+```cpp
+class DBStorage {
+public:
+    void save(Data data, string type) {
+        if (type == "SQL") {
+            // SQL logic
+        } else if (type == "MongoDB") {
+            // Mongo logic
+        }
+        // Adding Redis requires modifying this existing code!
+    }
+};
 ```
 
-This violates OCP — existing callers and tests are touched for every new backend.
+This violates OCP — existing callers and tests are touched for every new backend, increasing regression risk.
 
 ---
 
 ## Better Design
 
-### Create abstraction
+### Create an abstraction
 
 ```text
 <<abstract>>
@@ -246,58 +233,25 @@ classDiagram
     DBPersistence <|.. SaveToRedis
 ```
 
----
+When a requirement to save to Redis is added, you simply write a new class: `SaveToRedis`. 
+- No change to `SaveToSQL` or `SaveToMongoDB`.
+- The system is extended with new behavior, but existing code is strictly closed to modification.
 
-## Usage
+### Key Takeaways & Things to Check
 
-```text
-Cart
- │
- ▼
-DBPersistence   ← depends on abstraction, not concrete SQL/Mongo
- │
- ├── SaveToSQL
- ├── SaveToMongoDB
- └── SaveToFile
-```
-
-Adding **Redis** later:
-
-```text
-SaveToRedis
-    │
-   save()
-```
-
-- No change to `SaveToSQL`, `SaveToMongoDB`, or `SaveToFile`
-- Cart (or a factory) wires in `SaveToRedis` as another implementation
-- **Extension only** — OCP satisfied
-
-```mermaid
-flowchart TB
-    Cart["Cart / Service"]
-    Abs["DBPersistence (interface)"]
-    SQL["SaveToSQL"]
-    Mongo["SaveToMongoDB"]
-    File["SaveToFile"]
-    Redis["SaveToRedis (new — no edits to old classes)"]
-
-    Cart --> Abs
-    Abs --> SQL
-    Abs --> Mongo
-    Abs --> File
-    Abs --> Redis
-
-    style Redis fill:#efe,stroke:#060
-```
+* **Identify Extension Points:** Design your system so new features can be added by creating new classes, rather than modifying existing ones.
+* **Beware of `if/else` and `switch`:** Long chains of conditionals checking for "types" or "modes" are the biggest indicators that OCP is being violated.
+* **Use Polymorphism over Enums:** Instead of using an Enum to decide behavior, create an interface and let different classes implement the behavior.
+* **Don't Pre-Optimize:** Do not create abstractions for every single class "just in case." Only apply OCP when you foresee or experience changes.
+* **Protect the Core:** Ensure your core business logic is completely closed to modification from outside infrastructural changes.
 
 ---
 
 # L — Liskov Substitution Principle (LSP)
 
-### Definition
+## Definition
 
-> If class `B` is a subtype (child) of class `A` (parent), then objects of `A` should be replaceable with objects of `B` without affecting the correctness of the program.
+> **Objects of a superclass should be replaceable with objects of a subclass without affecting the correctness of the program.**
 
 In simple words:
 
@@ -305,11 +259,11 @@ In simple words:
 - A child class must honor the **behavior and contract** defined by the parent.
 - Inheritance should represent a true **"is-a"** relationship — not just sharing code.
 
-> **One-line summary:** A derived class must completely replace its base class without surprising the client or changing program correctness.
+Inheritance alone guarantees that methods exist (compile-time safety). It does **not** guarantee that behavior remains correct (runtime safety).
 
 ---
 
-## Generic structure
+## Generic Structure
 
 ```text
 Client
@@ -325,11 +279,11 @@ Sub Class (B)
 
 If:
 
-```text
+```cpp
 A* obj = new B();
 ```
 
-then all behavior **promised by `A`** must work correctly on `B`.
+then all behavior **promised by `A`** must work correctly on `B` without surprising the client.
 
 ```mermaid
 classDiagram
@@ -347,297 +301,408 @@ classDiagram
 
 ---
 
-## The four rules of LSP
+## Why LSP Violations Happen
 
-Formal rules that must hold when you use inheritance. Violating any of them breaks substitutability.
+A subclass may:
 
-```mermaid
-flowchart LR
-    LSP["LSP"]
-    LSP --> R1["1. Signature"]
-    LSP --> R2["2. Return type"]
-    LSP --> R3["3. Exception"]
-    LSP --> R4["4. Property"]
-```
+* Change method signatures.
+* Return incompatible results.
+* Throw unexpected exceptions.
+* Strengthen input requirements.
+* Break invariants of the parent.
+* Remove behaviors that clients depend upon.
 
-| Rule | Meaning |
-|------|---------|
-| **Signature** | Child keeps compatible method signatures |
-| **Return type** | Child returns same or more specific (covariant) type |
-| **Exception** | Child does not throw broader or unexpected exceptions |
-| **Property** | Child preserves invariants and history constraints |
+In such cases, client code written for the parent class may fail when a child object is substituted.
 
 ---
 
-### 1. Signature rule
+## Categories of LSP Rules
 
-When overriding a method in a child:
+LSP compliance can be verified through three major categories:
 
-- Method name stays the same.
-- Parameter list stays compatible.
-- Child cannot require **more restrictive or different** parameters than the parent.
-
-**Correct:**
-
-```cpp
-class Parent {
-public:
-    virtual void solve(string s) {}
-};
-
-class Child : public Parent {
-public:
-    void solve(string s) override {}
-};
-```
-
-```cpp
-Parent* p = new Child();
-p->solve("Hello");   // works — same contract
-```
-
-**Wrong:**
-
-```cpp
-class Parent {
-public:
-    virtual void solve(string s) {}
-};
-
-class Child : public Parent {
-public:
-    void solve(int x) {}   // different signature — not a valid override
-};
-```
-
-```cpp
-Parent* p = new Child();
-p->solve("Hello");   // client expects string — breaks substitutability
-```
-
-**Key idea:** A child must not change the method contract the client relies on.
-
----
-
-### 2. Return type rule
-
-The child should return:
-
-- The **same** return type, or
-- A **more specific (covariant)** return type.
-
-The client must still use the result as the parent promised.
-
-**Parent:**
-
-```cpp
-class Animal {};
-
-class Parent {
-public:
-    virtual Animal* random() {
-        return new Animal();
-    }
-};
-```
-
-**Child:**
-
-```cpp
-class Dog : public Animal {};
-
-class Child : public Parent {
-public:
-    Dog* random() override {
-        return new Dog();
-    }
-};
-```
-
-**Client:**
-
-```cpp
-Parent* p = new Child();
-Animal* a = p->random();   // OK: Dog* → Animal*
-```
-
-The client asked for an `Animal`. Receiving a `Dog` is fine because a Dog **is an** Animal.
-
-**Key idea:** Child can be **more specific**, not incompatible.
-
-```mermaid
-classDiagram
-    class Animal
-    class Dog
-    class Parent {
-        +random() Animal*
-    }
-    class Child {
-        +random() Dog*
-    }
-    Animal <|-- Dog
-    Parent <|-- Child
-    note for Child "Covariant return: Dog* where parent returns Animal*"
+```text
+LSP
+│
+├── Signature Rules
+│
+├── Property Rules
+│
+└── Method Rules
 ```
 
 ---
 
-### 3. Exception rule
+# 1. Signature Rules
 
-A child must not throw **broader or unexpected** exceptions compared to the parent. The client depends on the exception contract the parent declares.
+These rules ensure that the interface contract remains compatible.
 
-**Parent:**
+---
+
+## A. Method Argument Rule
+
+### Rule
+
+The child method must accept:
+
+* The same argument type, or
+* A broader type (Contravariance)
+
+It should never require a more restrictive input.
+
+### Example
+
+Parent:
 
 ```cpp
-class Parent {
-public:
-    virtual void m1() {
-        throw std::out_of_range("error");
-    }
-};
+void solve(string s);
 ```
 
-**Child (violates LSP):**
+Child:
 
 ```cpp
-class Child : public Parent {
-public:
-    void m1() override {
-        throw std::logic_error("error");
-    }
-};
+void solve(string s);
 ```
 
-**Client:**
+**Valid.**
+
+---
+
+Invalid Child:
 
 ```cpp
-Parent* p = new Child();
-try {
-    p->m1();
-} catch (std::out_of_range&) {
-    // handle — never runs; child threw logic_error instead
+void solve(int x);
+```
+
+The client expects to be able to pass a `string`.
+The child changes the expected interface and becomes more restrictive.
+This violates LSP.
+
+---
+
+## B. Return Type Rule
+
+### Rule
+
+The child method may return:
+
+* The same type
+* A narrower (more specific) subtype
+
+This is called **Covariant Return Type**.
+
+---
+
+### Example
+
+Parent:
+
+```cpp
+Animal* random();
+```
+
+Child:
+
+```cpp
+Dog* random();
+```
+
+**Valid because:**
+
+```text
+Dog IS-A Animal
+```
+
+The client expecting an `Animal` is perfectly happy receiving a `Dog`.
+
+---
+
+Invalid Child:
+
+```cpp
+Object* random();
+```
+
+when parent promised:
+
+```cpp
+Animal* random();
+```
+
+This weakens the contract. The client expects an `Animal` (with animal-specific methods), but receives a generic `Object`.
+
+---
+
+## C. Exception Rule
+
+### Rule
+
+The child may throw:
+
+* Fewer exceptions
+* More specific exceptions
+
+The child must not throw broader or unrelated exceptions.
+
+---
+
+### Example
+
+Parent throws:
+
+```cpp
+std::out_of_range
+```
+
+Child throwing:
+
+```cpp
+std::logic_error
+```
+
+This may break client code expecting only:
+
+```cpp
+catch(std::out_of_range&)
+```
+
+Since `logic_error` is a broader parent class of `out_of_range`, the client's `catch` block will miss it, causing a crash.
+
+---
+
+### Standard Exception Hierarchy
+
+```text
+std::logic_error
+│
+├── invalid_argument
+├── domain_error
+├── length_error
+└── out_of_range  <-- Child can throw this, but not logic_error
+```
+
+```text
+std::runtime_error
+│
+├── range_error
+├── overflow_error
+└── underflow_error
+```
+
+---
+
+# 2. Property Rules
+
+Property rules ensure that the child preserves the fundamental properties of the parent.
+
+---
+
+## A. Class Invariant
+
+### Definition
+
+A condition that must always remain true throughout the object's lifetime.
+
+---
+
+### Example
+
+```cpp
+balance >= 0
+```
+
+for a BankAccount.
+
+---
+
+Parent guarantees:
+
+```text
+balance can never be negative
+```
+
+Child allowing:
+
+```cpp
+balance = -500
+```
+
+breaks the invariant.
+LSP violation.
+
+---
+
+## B. History Constraint
+
+### Definition
+
+The subclass must preserve the expected lifecycle and behavioral history of the parent.
+
+---
+
+### Example
+
+Parent:
+
+```cpp
+withdraw()
+```
+
+is always allowed and mutates the balance.
+
+Child:
+
+```cpp
+withdraw()
+{
+    throw exception();
 }
 ```
 
-Client expects `std::out_of_range`. Child throws `std::logic_error`. Catch block may never run → **LSP violated**.
+for every withdrawal.
 
-**Exception hierarchy (C++):**
+The client expects withdrawals to work. The behavioral history changes entirely because a mutable state is suddenly locked.
+LSP is violated.
+
+---
+
+# 3. Method Rules
+
+Method rules deal with conditions before and after method execution.
+
+---
+
+## A. Preconditions
+
+### Definition
+
+Conditions that must be true before a method executes (inputs and state validation).
+
+---
+
+### Rule
+
+A child may weaken preconditions.
+A child must not strengthen preconditions.
+
+---
+
+### Example
+
+Parent:
 
 ```text
-Logic errors (often detectable before/during design):
-
-std::logic_error
-├── std::invalid_argument
-├── std::domain_error
-├── std::length_error
-└── std::out_of_range
-
-Runtime errors (during execution):
-
-std::runtime_error
-├── std::range_error
-├── std::overflow_error
-└── std::underflow_error
+Accepts:
+0 <= x <= 5
 ```
 
-**LSP guideline:**
+Child:
 
-| Allowed | Not allowed |
-|---------|-------------|
-| Same exception as parent | Completely different, unexpected exception |
-| More **specific** exception than parent | Broader exception client does not catch |
+```text
+Accepts:
+0 <= x <= 10
+```
+
+**Valid.**
+More inputs are accepted. The client passing `4` still succeeds.
 
 ---
 
-### 4. Property rule
+Invalid Child:
 
-The child must preserve important properties of the parent. Two major ideas:
-
-1. **Class invariant** — condition that must always stay true for the object.
-2. **History constraint** — child must not allow state changes the parent never allowed.
-
-#### A. Class invariant
-
-**Example — bank account:**
-
-```cpp
-class BankAccount {
-protected:
-    double balance;
-
-public:
-    virtual void withdraw(double amount) {
-        if (balance - amount < 0)
-            throw exception();
-        balance -= amount;
-    }
-};
+```text
+Accepts:
+0 <= x <= 3
 ```
 
-**Invariant:** `balance >= 0` must always hold.
-
-**Wrong child:**
-
-```cpp
-class ChildAccount : public BankAccount {
-public:
-    void withdraw(double amount) override {
-        balance -= amount;   // no check — balance can go negative
-    }
-};
-```
-
-Child breaks the invariant → **LSP violated**.
-
-```mermaid
-flowchart TD
-    INV["Invariant: balance >= 0"]
-    P["BankAccount::withdraw checks before deduct"]
-    C["ChildAccount::withdraw — no check"]
-    INV --> P
-    P -->|"substitute Child for BankAccount"| C
-    C --> BREAK["balance can become negative"]
-
-    style BREAK fill:#fee,stroke:#c00
-```
-
-#### B. History constraint
-
-**Parent — read-only file:**
-
-```cpp
-class ReadOnlyFile {
-public:
-    virtual string read() {
-        return data;
-    }
-};
-```
-
-Object is read-only by contract.
-
-**Wrong child:**
-
-```cpp
-class EditableFile : public ReadOnlyFile {
-public:
-    void write(string s) {
-        data = s;
-    }
-};
-```
-
-A supposedly read-only file becomes mutable. Client expecting read-only behavior can break → **history constraint violated**.
-
-**Fix:** Do not inherit `ReadOnlyFile` for editable files. Use separate types or composition (`ReadOnlyFile` vs `ReadWriteFile`).
+The child becomes more restrictive.
+Client code that previously worked (e.g., passing `4`) may fail.
 
 ---
 
-## Design example — account hierarchy
+### Easy Memory Trick
 
-The account example applies **property rule** and **behavioral contract** at the design level — same lesson as formal rules, different diagram.
+```text
+Preconditions
+↓
+Can only become weaker
+```
 
-### Bad design
+---
+
+## B. Postconditions
+
+### Definition
+
+Conditions guaranteed after method execution (outputs and state mutations).
+
+---
+
+### Rule
+
+A child may strengthen postconditions.
+A child must not weaken postconditions.
+
+---
+
+### Example
+
+Parent:
+
+```cpp
+brake()
+```
+
+guarantees:
+
+```text
+Speed decreases
+```
+
+---
+
+Child:
+
+```text
+Speed decreases
+Battery gets charged
+```
+
+**Valid.**
+Additional guarantee provided. Client relying on speed decreasing is still happy.
+
+---
+
+Invalid Child:
+
+```text
+Speed unchanged
+```
+
+or
+
+```text
+Speed increases
+```
+
+Parent contract is violated.
+
+---
+
+### Easy Memory Trick
+
+```text
+Postconditions
+↓
+Can only become stronger
+```
+
+---
+
+## Design Example — Account Hierarchy
+
+The classic structural violation of LSP occurs when forcing classes into an inheritance hierarchy just because they share a name, ignoring behavioral differences.
+
+### Bad Design
 
 ```text
                 <<abstract>>
@@ -653,99 +718,19 @@ The account example applies **property rule** and **behavioral contract** at the
         Savings  Current  FixedDeposit
 ```
 
-```mermaid
-classDiagram
-    class Account {
-        <<abstract>>
-        +deposit()
-        +withdraw()
-    }
-    class SavingsAccount {
-        +deposit()
-        +withdraw()
-    }
-    class CurrentAccount {
-        +deposit()
-        +withdraw()
-    }
-    class FixedDepositAccount {
-        +deposit()
-        +withdraw() not allowed
-    }
-    Account <|-- SavingsAccount
-    Account <|-- CurrentAccount
-    Account <|-- FixedDepositAccount
+A `FixedDepositAccount` cannot allow withdrawals. Usually developers write:
+
+```cpp
+void withdraw(double amount) {
+    throw exception();
+}
 ```
 
-### Problem
+The client trusted **any** `Account` to support `withdraw()`. `FixedDepositAccount` breaks that contract. **LSP is violated.**
 
-```text
-SavingsAccount
-    ├── deposit()
-    └── withdraw()
+### Good Design — Split by Behavior
 
-CurrentAccount
-    ├── deposit()
-    └── withdraw()
-
-FixedDepositAccount
-    ├── deposit()
-    └── withdraw()   ← not valid for fixed deposit
-```
-
-`withdraw()` is not valid for a fixed deposit. A common (bad) fix:
-
-```text
-withdraw()
-    -> throws exception
-```
-
-Then client code breaks:
-
-```text
-Account* acc = new FixedDepositAccount();
-acc->withdraw();   // runtime failure — violates caller's expectation
-```
-
-The client trusted **any** `Account` to support `withdraw()`. `FixedDepositAccount` breaks that contract → **LSP violated**.
-
-```mermaid
-flowchart TD
-    C["Client: acc->withdraw()"]
-    A["Expects: every Account can withdraw"]
-    F["FixedDepositAccount: throws or fails"]
-    C --> A
-    A --> F
-
-    style F fill:#fee,stroke:#c00
-```
-
----
-
-## Good design — split by behavior
-
-Do not force one parent to expose operations that only some children support. **Split the hierarchy by capability.**
-
-### Step 1 — non-withdrawable branch
-
-```text
-<<abstract>>
-NonWithdrawableAccount
-│
-└── deposit()
-```
-
-### Step 2 — withdrawable branch
-
-```text
-<<abstract>>
-WithdrawableAccount
-│
-├── deposit()
-└── withdraw()
-```
-
-### Inheritance
+Do not force one parent to expose operations that only some children support. Split the hierarchy by capability.
 
 ```text
             NonWithdrawableAccount
@@ -761,183 +746,319 @@ WithdrawableAccount
            SavingsAcc   CurrentAcc
 ```
 
-```mermaid
-classDiagram
-    class NonWithdrawableAccount {
-        <<abstract>>
-        +deposit()
-    }
-    class WithdrawableAccount {
-        <<abstract>>
-        +deposit()
-        +withdraw()
-    }
-    class FixedDepositAccount {
-        +deposit()
-    }
-    class SavingsAccount {
-        +deposit()
-        +withdraw()
-    }
-    class CurrentAccount {
-        +deposit()
-        +withdraw()
-    }
-    NonWithdrawableAccount <|-- FixedDepositAccount
-    WithdrawableAccount <|-- SavingsAccount
-    WithdrawableAccount <|-- CurrentAccount
+- Code that must call `withdraw()` only holds `WithdrawableAccount`.
+- Fixed deposits never appear where `withdraw()` is expected.
+- Every subclass supports **everything** its parent promises → **LSP satisfied**.
+
+---
+
+# Final LSP Checklist
+
+Before creating inheritance, ask:
+
+### Signature Rules
+* Same method signature?
+* Compatible arguments?
+* Compatible return type?
+* Compatible exceptions?
+
+### Property Rules
+* Parent invariants preserved?
+* History constraint preserved?
+
+### Method Rules
+* Preconditions not strengthened?
+* Postconditions not weakened?
+
+If any answer is No, inheritance is probably incorrect.
+
+### Key Takeaways & Things to Check
+
+* **Is-A vs. Has-A:** Ensure the subclass truly "is a" version of the superclass in behavior, not just in data. If not, use composition (Has-A).
+* **Don't Stub Behaviors:** If a subclass implements a parent's method by throwing a `NotImplementedException` or returning empty/null, it violates LSP.
+* **Respect the Contract:** Never strengthen the preconditions (inputs) or weaken the postconditions (outputs) defined by the parent.
+* **Watch for Type Checks:** If client code has to use `instanceof` or `typeof` to check which subclass it's dealing with before calling a method, LSP is broken.
+* **Preserve Invariants:** Ensure that any business rules or state constraints guaranteed by the parent class are never compromised by the subclass.
+
+---
+
+# I — Interface Segregation Principle (ISP)
+
+## Definition
+
+> **Clients should not be forced to depend upon interfaces they do not use.**
+
+---
+
+## Problem: Fat Interfaces
+
+A large interface often contains unrelated methods that combine distinct behaviors.
+
+Example:
+
+```cpp
+class Shape
+{
+    virtual double area() = 0;
+    virtual double volume() = 0;
+};
 ```
 
 ---
 
-## Final structure — client usage
+Now:
+
+```cpp
+Square
+Rectangle
+```
+
+must implement:
+
+```cpp
+volume()
+```
+
+even though volume makes no sense for them.
+
+Usually developers write:
+
+```cpp
+throw exception();
+```
+
+or
+
+```cpp
+return 0;
+```
+
+which is poor design and inherently violates LSP.
+
+---
+
+## Exact Reasoning Behind ISP
+
+Why are "Fat" interfaces bad?
+
+1. **Unnecessary Methods:** Classes are forced to write dummy code.
+2. **Coupling Unrelated Clients:** A client dealing with 2D layouts is forced to depend on an interface that changes whenever 3D physics formulas are updated.
+3. **Compilation Dependencies:** In compiled languages (like C++ or Java), modifying a fat interface (e.g., adding `calculateMass()`) forces all clients and all shapes—even 2D ones—to recompile and redeploy.
+
+---
+
+## ISP Solution
+
+Split interfaces according to client needs.
+
+### 2D Shape
+
+```cpp
+class TwoDShape
+{
+    virtual double area() = 0;
+};
+```
+
+Examples:
+```cpp
+Square
+Rectangle
+Circle
+```
+
+---
+
+### 3D Shape
+
+```cpp
+class ThreeDShape
+{
+    virtual double area() = 0;
+    virtual double volume() = 0;
+};
+```
+
+Examples:
+```cpp
+Cube
+Sphere
+Cylinder
+```
+
+---
+
+## Benefits
+
+* **No unnecessary methods:** Classes implement only what they need.
+* **Better SRP:** Each interface has a single responsibility.
+* **Easier Maintenance:** Smaller interfaces are easier to understand and modify.
+* **Better Extensibility:** New shapes can be added without affecting unrelated classes.
+
+### Key Takeaways & Things to Check
+
+* **Keep Interfaces Lean:** Interfaces should represent a specific role or capability, not a dumping ground for every possible method.
+* **Avoid Dummy Implementations:** If implementing classes are forced to write empty methods or throw exceptions for methods they don't need, the interface is too fat.
+* **Client-Driven Design:** Design interfaces based on what the *client* needs to call, not on what the implementing class is capable of doing.
+* **Segregate by Feature:** Separate completely unrelated behaviors (e.g., `Printable` and `Savable`) into different interfaces so clients only depend on what they use.
+* **Watch Compilation Dependencies:** In compiled languages, fat interfaces force unnecessary recompilations. Keep them small to minimize build times.
+
+---
+
+# D — Dependency Inversion Principle (DIP)
+
+## Definition
+
+### Rule 1
+> **High-level modules should not depend on low-level modules. Both should depend on abstractions.**
+
+### Rule 2
+> **Abstractions should not depend on details. Details should depend on abstractions.**
+
+---
+
+## Why Direct Coupling Is Bad
+
+Consider a high-level application directly calling a specific database:
+
+```cpp
+Application
+ ├── SQLDB
+ └── MongoDB
+```
+
+The application directly knows implementation details.
+
+Changing:
+```text
+MongoDB → CassandraDB
+```
+requires changing application code.
+
+This creates:
+* **Tight coupling:** The business logic is glued to the storage mechanism.
+* **Difficult testing:** You cannot test the application without a live database.
+* **Poor scalability:** Adapting to new technologies requires rewriting core logic.
+* **OCP violation:** You must modify `Application` to extend support to new databases.
+
+---
+
+## DIP Solution
+
+Introduce an abstraction layer.
+
+```cpp
+class Persistence
+{
+    virtual void save() = 0;
+};
+```
+
+---
+
+Implementations:
+
+```cpp
+SqlDatabase
+MongoDatabase
+```
+
+depend on (implement):
+
+```cpp
+Persistence
+```
+
+---
+
+Application also depends on:
+
+```cpp
+Persistence
+```
+
+---
+
+Architecture:
 
 ```text
-Client
-│
-├── List<WithdrawableAccount>
-│      ├── SavingsAccount
-│      └── CurrentAccount
-│
-└── List<NonWithdrawableAccount>
-       └── FixedDepositAccount
+               Persistence
+                    ▲
+                    │
+      ┌─────────────┴─────────────┐
+      │                           │
+ SqlDatabase              MongoDatabase
+      ▲                           ▲
+      └────────── Application ────┘
 ```
 
-- Code that must call `withdraw()` only holds `WithdrawableAccount`
-- Fixed deposits never appear where `withdraw()` is expected
-- Every subclass supports **everything** its parent promises → **LSP satisfied**
-
-```mermaid
-flowchart TB
-    subgraph withdrawable["WithdrawableAccount"]
-        SA["SavingsAccount"]
-        CA["CurrentAccount"]
-    end
-
-    subgraph nonWd["NonWithdrawableAccount"]
-        FD["FixedDepositAccount"]
-    end
-
-    Client["Client"]
-    Client -->|"withdraw() allowed"| withdrawable
-    Client -->|"deposit only"| nonWd
-
-    style withdrawable fill:#efe,stroke:#060
-    style nonWd fill:#eef,stroke:#336
-```
+Notice the arrows. Instead of `Application` pointing down to `SqlDatabase`, both `Application` and `SqlDatabase` point **up** to `Persistence`. The dependency has been inverted.
 
 ---
 
-## LSP checklist before using inheritance
+## Dependency Injection
 
-Before inheriting `B` from `A`, ask:
+Instead of creating dependencies internally:
 
-- Can the child be used **anywhere** the parent is expected?
-- Does the child preserve **all** parent behaviors?
-- Are method **signatures** compatible? (Signature rule)
-- Are **return types** compatible or covariant? (Return type rule)
-- Are **exception** guarantees preserved? (Exception rule)
-- Are **invariants** maintained? (Property rule — class invariant)
-- Does object **state** evolve according to parent rules? (Property rule — history constraint)
-
-If any answer is **No**, inheritance is likely wrong — consider **composition** or a **split hierarchy** instead.
-
----
-
-# Visual revision
-
-Quick reference — same shapes as the lecture diagrams.
-
-```text
-SRP
-----
-ShoppingCart
- └─ calculateTotalPrice()
-
-InvoicePrinter
- └─ printInvoice()
-
-DBStorage
- └─ saveToDB()
-
-
-OCP
-----
-DBPersistence
- ├─ SaveToSQL
- ├─ SaveToMongoDB
- └─ SaveToFile
- (+ SaveToRedis — extend without modifying above)
-
-
-LSP (design)
-----
-WithdrawableAccount
- ├─ SavingsAccount
- └─ CurrentAccount
-
-NonWithdrawableAccount
- └─ FixedDepositAccount
-
-LSP (four rules)
-----
-1. Signature   — same compatible parameters
-2. Return type — same or covariant (Dog* → Animal*)
-3. Exception   — same or more specific, not unexpected
-4. Property    — invariants + history constraint
+```cpp
+// Bad: Internal instantiation
+class Application {
+    SqlDatabase db; 
+};
 ```
 
-```mermaid
-flowchart TB
-    subgraph SRP["SRP — one job per class"]
-        S1["ShoppingCart → calculate"]
-        S2["InvoicePrinter → print"]
-        S3["DBStorage → save"]
-    end
+Inject them externally:
 
-    subgraph OCP["OCP — extend via interface"]
-        O0["DBPersistence"]
-        O1["SaveToSQL"]
-        O2["SaveToMongoDB"]
-        O3["SaveToFile"]
-        O0 --> O1 & O2 & O3
-    end
+```cpp
+// Good: Injecting the abstraction
+class Application {
+    Persistence* db;
+public:
+    Application(Persistence* injectedDb) : db(injectedDb) {}
+};
 
-    subgraph LSP["LSP — contracts + split hierarchy"]
-        L0["Four rules: signature, return, exception, property"]
-        L1["WithdrawableAccount"]
-        L2["Savings / Current"]
-        L3["NonWithdrawableAccount"]
-        L4["FixedDeposit"]
-        L1 --> L2
-        L3 --> L4
-    end
+// Usage
+Application app(new SqlDatabase());
+// or
+Application app(new MongoDatabase());
 ```
 
 ---
 
-## How the three connect (interview tip)
+## Benefits
 
-| Principle | Question it answers |
-|-----------|---------------------|
-| **SRP** | “Who is allowed to change this class?” → One concern only |
-| **OCP** | “How do we add features without breaking old code?” → Abstractions + new implementations |
-| **LSP** | “Can I safely use a subtype wherever I use the base type?” → Match contracts: signatures, returns, exceptions, invariants |
+* **Loose coupling:** High-level code doesn't care how data is stored.
+* **Better testing:** You can easily inject a mock database.
+* **Easier maintenance:** Database technology can be swapped invisibly.
+* **Supports OCP:** New databases can be added without altering `Application`.
 
-**Related notes:** [System Design Fundamentals — Part 1](../Complete%20Fundamentals%20Notes/Part1.md) (architecture and modules at system level).
+### Key Takeaways & Things to Check
+
+* **Abstract the Volatile:** Always depend on abstractions (interfaces) for volatile, external dependencies like databases, APIs, or UI frameworks.
+* **Inject Dependencies:** Do not instantiate concrete low-level details inside high-level modules using the `new` keyword; inject them via constructors.
+* **Invert the Flow:** Ensure that the architectural flow points *inward* toward the core business logic, never outward to infrastructure.
+* **Test in Isolation:** If you cannot easily swap a real database for a mock database in your unit tests, you are violating DIP.
+* **Interfaces Belong to the Client:** The high-level module should dictate the shape of the interface it needs, and the low-level module should adapt to it.
 
 ---
 
-## Status & upcoming updates
+# Final Thoughts & Trade-Offs
 
-| Planned | Status |
-|---------|--------|
-| S — Single Responsibility | Done (lecture example) |
-| O — Open/Closed | Done (lecture example) |
-| L — Liskov Substitution | Done (rules + account example) |
-| I — Interface Segregation | Coming soon |
-| D — Dependency Inversion | Coming soon |
-| More code examples (Java/TypeScript) | Coming soon |
-| ISP/DIP class diagrams | Coming soon |
+SOLID principles are **guidelines**, not strict laws. 
 
-*Last expanded: LSP four rules + account hierarchy. Check back for ISP and DIP.*
+### Practical Considerations
+
+Sometimes constraints force you to bend a principle:
+* **Performance requirements:** Polymorphism (DIP/OCP) relies on virtual table lookups. In high-performance hot paths (e.g., game engines), direct coupling may be chosen to ensure speed.
+* **Legacy systems:** Refactoring an old monolithic architecture into perfect SOLID components might not justify the business cost.
+* **Business constraints:** Rapid prototyping to hit a market deadline might necessitate tight coupling initially.
+
+### The Golden Rule
+
+The goal is not perfect dogmatic adherence. The goal is creating software that is:
+* Maintainable
+* Extensible
+* Scalable
+* Easy to understand
+
+Whenever you find yourself violating one principle, check whether it’s in service of a higher-priority need (like performance) and **document your reasoning**. Adhering to these principles generally leads to more robust object-oriented code—but balance is key. By following LSP guidelines and applying ISP and DIP judiciously, you’ll write cleaner code that stands the test of evolving requirements.
