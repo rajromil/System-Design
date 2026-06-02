@@ -145,7 +145,6 @@ Solutions exist (like storing sessions in a shared Redis cache instead of in-mem
 
 Here is the hard truth that makes vertical scaling insufficient by itself:
 
-```
 AWS EC2 Instance Sizes (simplified progression):
 
 t2.micro    → 1 vCPU,   1 GB RAM     ← starter
@@ -161,7 +160,6 @@ There is no "u-100tb1". AWS doesn't make it.
 The physical laws of silicon set a ceiling.
 You cannot put infinite RAM on one chip.
 You cannot have infinite CPU cores on one socket.
-```
 
 So if your application needs the equivalent of 1000 vCPUs and 500 TB of RAM, vertical scaling literally cannot provide it. You've hit the physical ceiling of what one machine can be. This is called the **scaling bottleneck** or the **vertical ceiling**.
 
@@ -215,7 +213,6 @@ Users 1 through 1000 ───────────────▶│   to se
                                      │  Status: CRASHING       │
                                      └─────────────────────────┘
 
-
 WITH HORIZONTAL SCALING:
                                      ┌─────────────────────────┐
                                      │        Server 1         │
@@ -265,7 +262,6 @@ This is obviously ridiculous. Users don't know about your infrastructure. Users 
 
 A load balancer is a dedicated piece of infrastructure (it can be a physical device, a virtual machine, or a software service like AWS ELB) that sits in front of all your servers. It has exactly ONE public IP address or DNS name.
 
-```
 User types in browser: www.flipkart.com
 DNS resolves this to: 15.207.100.200   ← This is the Load Balancer's IP
 
@@ -279,7 +275,6 @@ Load balancer forwards response back to the user
 
 From the user's perspective: They talked to www.flipkart.com
 They have NO IDEA that 3 servers exist behind the scenes.
-```
 
 The load balancer acts as a **reverse proxy** — it is the single point of contact for the outside world, and it internally distributes work to backend servers.
 
@@ -304,9 +299,7 @@ sequenceDiagram
 
 There are multiple algorithms:
 
-```
 Algorithm 1: Round Robin
-─────────────────────────
 Request 1  →  Server 1
 Request 2  →  Server 2
 Request 3  →  Server 3
@@ -319,9 +312,7 @@ some requests take 50ms and others take 5 seconds.
 Server 1 might be handling a heavy request but still
 gets the next request because it's "its turn."
 
-
 Algorithm 2: Least Connections (Least Busy)
-─────────────────────────────────────────────
 Load balancer constantly monitors how many 
 active connections each server has:
 
@@ -334,30 +325,24 @@ Next incoming request → Server 2 (least busy)
 This is smarter. More appropriate for requests 
 that vary widely in processing time.
 
-
 Algorithm 3: IP Hash
-──────────────────────
 HASH(user's IP address) % number_of_servers = server index
 
 Same user always goes to same server.
 Useful when you NEED session stickiness.
 (Though better solutions exist for sessions)
 
-
 Algorithm 4: Weighted Round Robin
-───────────────────────────────────
 If your servers have different capacities:
 
 Server 1: 8 cores  → weight 4  (gets 4 out of every 7 requests)
 Server 2: 4 cores  → weight 2  (gets 2 out of every 7 requests)
 Server 3: 2 cores  → weight 1  (gets 1 out of every 7 requests)
-```
 
 **The Load Balancer Also Does Health Checks:**
 
 Every few seconds (say every 5 seconds), the load balancer sends a small "are you alive?" request to each backend server. If a server stops responding (crashed, hung, under maintenance), the load balancer marks it as unhealthy and stops sending traffic to it. Users never even notice that one server went down — the other servers just pick up the slack.
 
-```
 Health check cycle (every 5 seconds):
 Load Balancer → pings Server 1 → Server 1 responds "200 OK" → Healthy (OK)
 Load Balancer → pings Server 2 → Server 2 responds "200 OK" → Healthy (OK)
@@ -367,7 +352,6 @@ Load Balancer now routes ALL traffic to Server 1 and Server 2 only.
 Server 3 is removed from the pool.
 When Server 3 recovers, it starts passing health checks again,
 and the load balancer adds it back to the pool.
-```
 
 This is why horizontal scaling gives you high availability. No single server failure takes down your entire system.
 
@@ -408,9 +392,7 @@ Let's think very carefully about the business reality here.
 
 You run an online exam portal. Students take exams. Your traffic pattern looks like this:
 
-```
 Traffic Pattern Throughout the Day:
-─────────────────────────────────────────────────────
 
 12 AM  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  (100 users   - night, nobody active)
 3 AM   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  (50 users    - dead silent)
@@ -422,7 +404,6 @@ Traffic Pattern Throughout the Day:
 2 PM   ████████████████████████████████  (8,000 users  - afternoon exams)
 5 PM   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  (300 users   - winding down)
 11 PM  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  (100 users   - almost nobody)
-```
 
 Suppose 1 EC2 instance can handle 1,000 users. Then:
 - At peak (10 AM): you need 15 instances
@@ -454,9 +435,7 @@ Suppose 1 EC2 instance can handle 1,000 users. Then:
 
 You define rules (called **scaling policies**) and the system automatically adds or removes servers based on real-time metrics.
 
-```
 AUTO SCALING CONFIGURATION:
-────────────────────────────────────────────────────────
 
 Minimum instances: 2   ← never go below 2 (for redundancy)
 Maximum instances: 20  ← never go above 20 (cost cap)
@@ -464,21 +443,20 @@ Desired instances: 2   ← start with 2
 
 Scale-OUT trigger: 
   "If AVERAGE CPU across all instances > 70% 
-   for 3 consecutive minutes,
-   ADD 2 new instances"
+  for 3 consecutive minutes,
+  ADD 2 new instances"
 
 Scale-IN trigger:
   "If AVERAGE CPU across all instances < 30%
-   for 10 consecutive minutes,
-   REMOVE 1 instance"
-   (we scale in slower than scale out — being conservative
-    about removing capacity is safer than removing too fast)
+  for 10 consecutive minutes,
+  REMOVE 1 instance"
+  (we scale in slower than scale out — being conservative
+  about removing capacity is safer than removing too fast)
 
 Cooldown period: 
   "After a scale-out event, wait 5 minutes 
-   before evaluating again"
+  before evaluating again"
   (prevents rapid thrashing — spinning up and down repeatedly)
-```
 
 Now let's trace through what happens in real life:
 
@@ -544,26 +522,24 @@ You're paying only for exactly what you need, exactly when you need it.
 
 CPU is the most common, but you can trigger auto scaling on many metrics:
 
-```
 CPU Utilization:       Most common. Good for compute-heavy applications.
 
 Memory Usage:          "If RAM usage > 80%, add instances."
-                       (Useful for memory-heavy apps)
+                     (Useful for memory-heavy apps)
 
 Request Count:         "If incoming requests > 1000/sec, add instances."
-                       (Useful when requests arrive faster than CPU reflects)
+                     (Useful when requests arrive faster than CPU reflects)
 
 Network I/O:           "If inbound network > 500 Mbps, add instances."
-                       (Useful for data-heavy streaming applications)
+                     (Useful for data-heavy streaming applications)
 
-Queue Depth:           "If SQS queue has > 1000 unprocessed messages, 
-                        add worker instances."
-                       (Useful for background job processing)
+**Queue Depth:**           "If SQS queue has > 1000 unprocessed messages, 
+                      add worker instances."
+                     (Useful for background job processing)
 
 Custom Metrics:        You can publish ANY metric to CloudWatch and 
-                       scale based on it. Business logic, database 
-                       connection pool usage — anything.
-```
+                     scale based on it. Business logic, database 
+                     connection pool usage — anything.
 
 ### How Do You Find the Right Threshold?
 
@@ -571,7 +547,6 @@ This is where **Load Testing** comes in.
 
 You use tools like Apache JMeter, k6, or AWS Load Testing to simulate realistic traffic hitting your server. You gradually ramp up the number of virtual users and watch what happens to CPU, memory, response time, and error rate.
 
-```
 Load Test Results for your server:
 
 100 virtual users  → CPU: 12%, Response: 45ms,  Errors: 0%   → Comfortable
@@ -582,7 +557,6 @@ Load Test Results for your server:
 
 Conclusion: Your server starts degrading meaningfully around CPU 70-75%.
 Set your auto scaling trigger at 70% CPU.
-```
 
 This scientific approach gives you a real number, not a guess.
 
@@ -667,19 +641,16 @@ So 2^10 ≈ 10^3, 2^20 ≈ 10^6, 2^30 ≈ 10^9 — and these correspond to KB, M
 
 ## Also Memorize: Time Units
 
-```
 1 minute    =  60 seconds
 1 hour      =  3,600 seconds
 1 day       =  86,400 seconds   ≈ 100,000 seconds (for easy math)
 1 month     =  ~30 days         = ~2,500,000 seconds
 1 year      =  ~365 days        = ~31,000,000 seconds ≈ 30 million seconds
-```
 
 The approximation of 1 day ≈ 100,000 seconds is very commonly used in interviews. It slightly overestimates (86,400 vs 100,000) but makes math much easier.
 
 ## Also Memorize: Common Data Sizes
 
-```
 1 ASCII character        =  1 byte
 1 Unicode character      =  2 bytes  (covers most languages including Hindi)
 1 integer (32-bit)       =  4 bytes
@@ -691,7 +662,6 @@ The approximation of 1 day ≈ 100,000 seconds is very commonly used in intervie
 1 HD photo               =  ~5-10 MB
 1 minute of audio (MP3)  =  ~1 MB
 1 minute of HD video     =  ~100 MB
-```
 
 ---
 
@@ -701,7 +671,6 @@ The approximation of 1 day ≈ 100,000 seconds is very commonly used in intervie
 
 Before any calculation, establish your assumptions out loud (in an interview, always state your assumptions — it shows you know the numbers aren't exact):
 
-```
 Assumptions:
 1. Twitter has 100 million Daily Active Users (DAU)
 2. Each user posts an average of 10 tweets per day
@@ -711,7 +680,6 @@ Assumptions:
 6. One character = 2 bytes (Unicode, to support all languages)
 7. One photo = 2 MB
 8. System needs to store tweets for 5 years
-```
 
 ---
 
@@ -719,7 +687,6 @@ Assumptions:
 
 **Write Load:**
 
-```
 Total tweets per day:
 = Number of users × tweets per user per day
 = 100,000,000 × 10
@@ -733,11 +700,9 @@ Now convert to per second (Tweets Per Second / TPS):
 = 10,000 tweets per second
 
 This is your WRITE QPS (Queries Per Second) = ~10,000/sec
-```
 
 **Read Load:**
 
-```
 Total tweet reads per day:
 = Number of users × reads per user per day
 = 100,000,000 × 1,000
@@ -751,10 +716,8 @@ Convert to per second:
 = 1 Million reads per second
 
 This is your READ QPS = ~1,000,000/sec
-```
 
 **The Read/Write Ratio:**
-```
 Read QPS  : Write QPS
 1,000,000 : 10,000
 = 100 : 1
@@ -767,7 +730,6 @@ It tells you:
 → Consider aggressive caching (memcached, Redis)
 → Consider read replicas
 → The bottleneck will almost certainly be in the read path, not write path
-```
 
 | Metric | Value | Design implication |
 |--------|-------|-------------------|
@@ -781,7 +743,6 @@ It tells you:
 
 **Text storage per day:**
 
-```
 Size of one tweet (text only):
 = 200 characters × 2 bytes/character
 = 400 bytes
@@ -792,11 +753,9 @@ Total text storage per day:
 = 500,000,000,000 bytes
 = 500 GB per day
 ≈ 0.5 TB per day (text only)
-```
 
 **Photo storage per day:**
 
-```
 Number of tweets with photos:
 = 10% × 1,000,000,000
 = 100,000,000 photos per day
@@ -807,7 +766,6 @@ Total photo storage per day:
 = 200,000,000 MB
 = 200,000 GB
 = 200 TB per day
-```
 
 **Combined storage per day:**
 
@@ -823,7 +781,6 @@ At this scale, it doesn't matter. This is correct approximation practice.
 
 **Storage for 5 years:**
 
-```
 Daily storage needed   ≈ 200 TB/day
 Annual storage needed  = 200 TB × 365 days ≈ 73,000 TB = 73 PB/year
 5-year storage needed  = 73 × 5 = 365 PB ≈ ~400 PB (rounding up for safety)
@@ -833,11 +790,9 @@ just for tweets and photos over 5 years.
 
 For reference: 1 PB = 1,000 TB = 1,000,000 GB
 400 PB = a genuinely staggering amount of storage.
-```
 
 **Important addition — bandwidth estimation:**
 
-```
 Outbound bandwidth (serving reads):
 = Reads per second × average size of one tweet (with photo probability)
 
@@ -856,13 +811,11 @@ Outbound bandwidth:
 Twitter needs ~200 GB/sec of outbound bandwidth.
 That's why they have multiple data centers and use CDNs 
 (Content Delivery Networks) to distribute the load globally.
-```
 
 ---
 
 ### Resource Estimation — Full Working
 
-```
 Given:
 - 10,000 requests per second (write QPS from above)
 - Each request takes 10ms of CPU time to process
@@ -891,11 +844,10 @@ sitting behind a load balancer,
 to handle Twitter's write traffic of 10,000 requests/second.
 
 Buffer: In practice, you'd provision 30-35% extra capacity
-        because CPU usage shouldn't max out — you want headroom
-        for spikes and to avoid triggering auto-scaling constantly.
-        
+      because CPU usage shouldn't max out — you want headroom
+      for spikes and to avoid triggering auto-scaling constantly.
+      
 So realistic answer: ~35 servers.
-```
 
 ```mermaid
 flowchart LR

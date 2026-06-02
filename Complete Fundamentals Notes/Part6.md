@@ -28,7 +28,6 @@ A database like PostgreSQL stores data in a highly structured way. Every row is 
 
 Now consider a video file.
 
-```
 A typical MP4 video:
   Duration:     10 minutes
   Resolution:   1080p
@@ -37,13 +36,12 @@ A typical MP4 video:
 
 Trying to store this as a database column:
   CREATE TABLE videos (
-      id         INT PRIMARY KEY,
-      title      VARCHAR(255),
-      video_data BLOB    ← the MP4 lives here
+    id         INT PRIMARY KEY,
+    title      VARCHAR(255),
+    video_data BLOB    ← the MP4 lives here
   );
   
   INSERT INTO videos VALUES (1, 'My Video', <12 billion bits of data>);
-```
 
 Here's what happens to your database when you do this:
 
@@ -73,7 +71,6 @@ flowchart LR
 
 BLOB stands for **Binary Large Object**. It's the binary representation of any file — the raw 0s and 1s that make up the file's content.
 
-```
 A PNG image at the binary level:
 89 50 4E 47 0D 0A 1A 0A 00 00 00 0D 49 48 44 52 ...
 
@@ -82,7 +79,6 @@ A PDF document:
 
 An MP4 video:
 00 00 00 20 66 74 79 70 69 73 6F 6D ...
-```
 
 At the storage level, they're all just bytes. The difference is how an application interprets them. Blob storage doesn't care — it stores bytes and returns bytes when asked.
 
@@ -117,7 +113,6 @@ Important: The `/` in S3 keys is a naming convention. S3 is a **flat key-value s
 
 99.999999999% durability means: if you store 10 million objects, you might lose one every 10,000 years.
 
-```
 When you upload to S3:
 1. File is split into chunks
 2. Chunks stored with erasure coding (like advanced RAID)
@@ -128,7 +123,6 @@ For ap-south-1 (Mumbai):
 
 Your file's chunks live across all three simultaneously.
 Losing data requires catastrophic simultaneous failure across all AZs.
-```
 
 ### Pre-Signed URLs — The Right Way to Handle Uploads and Downloads
 
@@ -194,7 +188,6 @@ Same pattern works for **downloads** — pre-signed GET URL, user downloads dire
 | **S3 Glacier** | ~$0.004 | Hours | Archives, compliance |
 | **S3 Glacier Deep Archive** | ~$0.00099 | 12–48 hours | Long-term cold storage |
 
-```
 Lifecycle example:
   Day 0-30:    S3 Standard
   Day 31-90:   S3 Standard-IA
@@ -203,7 +196,6 @@ Lifecycle example:
 
 Pay full price only for recent/popular content.
 Archive old content at minimum cost.
-```
 
 ---
 
@@ -213,7 +205,6 @@ Archive old content at minimum cost.
 
 Signals in fiber move at roughly 200,000 km/s. Physics sets a floor on latency.
 
-```
 Mumbai to New York:
   Distance: ~12,000 km
   Minimum one-way: ~60ms
@@ -222,50 +213,42 @@ Mumbai to New York:
 User in New York, origin in Mumbai — loading 15 assets:
   ~3+ seconds from latency alone (before server processing)
 
-With CDN edge in New York:
+**With CDN edge in New York:**
   Distance: ~20 km → ~2ms per asset
   Total: ~30ms — roughly 100x improvement
-```
 
 ## How CDN Routing Works — GeoDNS
 
-```
-WITHOUT CDN:
+**WITHOUT CDN:**
 DNS always returns same IP → Mumbai server for everyone
 
-WITH CDN (GeoDNS):
+**WITH CDN (GeoDNS):**
   User in Mumbai  → DNS returns Mumbai PoP IP
   User in New York → DNS returns New York PoP IP
   User in Tokyo   → DNS returns Tokyo PoP IP
 
 Same domain, different IPs based on user location.
 Each user hits the geographically closest edge server.
-```
 
 ## First Request vs Subsequent — Cache Miss vs Hit at Edge
 
 **First user at an edge (cache miss):**
 
-```
 1. User → CDN edge (New York): GET /images/iphone-15.jpg
 2. Edge cache: MISS
 3. Edge → Origin (S3 in Mumbai): fetch image (~200ms)
 4. Edge caches locally with TTL
 5. Edge → User: image delivered (~220ms total)
-```
 
 **Every subsequent user in that region (cache hit):**
 
-```
 1. User → same CDN edge
 2. Edge cache: HIT (TTL still valid)
 3. Edge → User directly (~15ms)
-   S3 never contacted
-```
+  S3 never contacted
 
 ## TTL Strategy — Balancing Freshness vs Performance
 
-```
 STATIC ASSETS (content hash in filename):
   main.a3f8b2c1.js
   Cache-Control: public, max-age=31536000, immutable
@@ -283,7 +266,6 @@ DYNAMIC / PERSONALIZED:
   Cache-Control: no-store or no-cache
   no-cache = revalidate with origin before serving
   no-store  = never cache at all
-```
 
 ## CDN Cache Invalidation
 
@@ -320,7 +302,6 @@ flowchart LR
     CF -->|"cache hit"| U
 ```
 
-```
 COMPLETE ARCHITECTURE:
 
 - S3 bucket: block all public access
@@ -331,7 +312,6 @@ COMPLETE ARCHITECTURE:
 Flow:
   First user in region → edge fetches from S3, caches
   Next users in region → served from edge, S3 untouched
-```
 
 ---
 
@@ -361,7 +341,6 @@ Email sending does **not** need to block the response. If email service is down,
 
 ## The Spectrum of Asynchronous Tasks
 
-```
 MUST BE SYNCHRONOUS (user waits):
   - Validating user input
   - Checking stock
@@ -382,7 +361,6 @@ MUST BE ASYNCHRONOUS (too long synchronously):
   - ML training
   - Bulk email (100k recipients)
   - Large file parsing/indexing
-```
 
 **Key question:** *Does the user need this result before they can continue?* If no → async candidate.
 
@@ -401,12 +379,10 @@ app.post('/orders', async (req, res) => {
 });
 ```
 
-```
-PROBLEM 1: Server restart → in-flight email task lost
-PROBLEM 2: No retry on SendGrid failure
-PROBLEM 3: No visibility (pending/failed counts)
-PROBLEM 4: 50k orders → 50k simultaneous HTTP calls → rate limit failures
-```
+**PROBLEM 1:** Server restart → in-flight email task lost
+**PROBLEM 2:** No retry on SendGrid failure
+**PROBLEM 3:** No visibility (pending/failed counts)
+**PROBLEM 4:** 50k orders → 50k simultaneous HTTP calls → rate limit failures
 
 A message broker fixes all four.
 
@@ -424,13 +400,11 @@ flowchart LR
     P -.->|"responds immediately"| U["User"]
 ```
 
-```
 Producer puts task in broker (written to disk).
 Broker acknowledges persistence.
 Server responds to user immediately.
 Consumer picks up task independently.
 Consumer acks when done → message removed.
-```
 
 **Critical difference:** Task is durable in the broker **before** the server responds. Server crash does not lose the task.
 
@@ -467,7 +441,6 @@ Scale: add more consumers → queue drains faster
 
 ### Why Queues Fail for Multiple Consumer Types
 
-```
 Video uploaded — naive approach writes to 4 separate queues:
   Transcoder queue
   Caption queue
@@ -479,7 +452,6 @@ Crash after writing to queue 1 only:
   No captions, thumbnails, or search index
 
 Can't atomically write to 4 queues in one operation.
-```
 
 ### Message Stream (Apache Kafka, AWS Kinesis)
 
@@ -502,7 +474,6 @@ Retention: 7 days default — late consumers can catch up
 
 **Video upload with Kafka — one write, many consumers:**
 
-```
 Producer: ONE write to "video-uploads" topic
 
 Consumer Group 1: Transcode to 360p–4K
@@ -513,13 +484,11 @@ Consumer Group 5: Update recommendation model
 
 Producer wrote once. All five got the message.
 Caption service crash? Others unaffected. Catches up from its offset.
-```
 
 **Write once, read by many** — Kafka's core power.
 
 ### Why Kafka Is So Fast
 
-```
 Not primarily "in-memory" — Kafka writes to DISK sequentially.
 
 Sequential append-only log:
@@ -530,8 +499,7 @@ Zero-copy (sendfile):
   Disk → network socket without copying through app memory
 
 Result: millions of messages/sec per broker
-        LinkedIn: ~7 trillion messages/day
-```
+      LinkedIn: ~7 trillion messages/day
 
 ---
 
@@ -558,22 +526,20 @@ Result: millions of messages/sec per broker
 
 ### Decision Framework
 
-```
-Q1: Does caller need the result to continue?
+**Q1:** Does caller need the result to continue?
   YES → REST    NO → Broker
 
-Q2: Is task quick (< 1-2 sec)?
+**Q2:** Is task quick (< 1-2 sec)?
   YES → REST OK    NO → Broker
 
-Q3: Can downstream be temporarily unavailable?
+**Q3:** Can downstream be temporarily unavailable?
   NO → REST    YES → Broker
 
-Q4: One event triggers multiple services?
+**Q4:** One event triggers multiple services?
   YES → Kafka/pub-sub
 
-Q5: Need ordered processing at scale?
+**Q5:** Need ordered processing at scale?
   YES → Kafka (per-partition ordering)
-```
 
 ---
 
@@ -620,7 +586,6 @@ flowchart TB
     APP --> DB
 ```
 
-```
 UPLOAD:
 1. Client asks App Server for upload URL
 2. App Server returns S3 pre-signed URL
@@ -633,7 +598,6 @@ WATCH:
 1. HTML references cdn.example.com/videos/789/720p.mp4
 2. CDN edge: miss → fetch from S3, cache
 3. Next viewers in region: CDN hit, S3 untouched
-```
 
 Blob storage for files. CDN for global delivery. Kafka for async pipeline. Redis for hot metadata. PostgreSQL for structured data. REST for synchronous user-facing operations.
 

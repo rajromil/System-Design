@@ -132,8 +132,7 @@ ACID is the set of guarantees SQL databases provide. Understanding these deeply 
 
 A transaction either completes entirely or doesn't happen at all. There is no partial completion.
 
-```
-Scenario: Rahul transfers ₹5,000 to Shivam.
+**Scenario:** Rahul transfers ₹5,000 to Shivam.
 
 This involves TWO database operations:
   Operation 1: Deduct ₹5,000 from Rahul's account
@@ -143,7 +142,7 @@ What if Operation 1 succeeds but Operation 2 fails?
   → Rahul loses ₹5,000. Shivam gets nothing. Money disappears.
   → This is a catastrophic bug.
 
-With Atomicity, these two operations are wrapped in a TRANSACTION:
+**With Atomicity, these two operations are wrapped in a TRANSACTION:**
 
 BEGIN TRANSACTION;
   UPDATE accounts SET balance = balance - 5000 WHERE user_id = 2;  -- Rahul
@@ -155,7 +154,6 @@ the database ROLLS BACK Operation 1 automatically.
 Rahul's ₹5,000 is restored. Nothing happened. No money lost.
 
 Atomicity means: all or nothing. No middle ground.
-```
 
 ```mermaid
 flowchart TD
@@ -178,18 +176,16 @@ flowchart TD
 
 Every transaction takes the database from one valid state to another valid state. All defined rules, constraints, and relationships are always satisfied.
 
-```
 Example: You have a constraint that account balance cannot go below ₹0.
 
 Rahul's balance: ₹3,000
 Rahul tries to send ₹5,000 to Shivam.
 
-With Consistency:
+**With Consistency:**
 The database checks: "After this transaction, will Rahul's balance be < 0?"
 Answer: Yes (3000 - 5000 = -2000)
 Database REJECTS the transaction with an error.
 Rahul's balance remains ₹3,000. Constraint never violated.
-```
 
 **I — Isolation**
 
@@ -221,24 +217,22 @@ With Isolation (using locks or MVCC):
 
 Once a transaction is committed, it stays committed — even if the server crashes immediately after. The data is written to disk, not just held in memory.
 
-```
 Timeline:
-t=0: User places order. Transaction commits.
-t=1: Database responds "Order placed successfully!"
-t=2: Server crashes (power outage, hardware failure)
-t=3: Server restarts
+- **t=0** — User places order. Transaction commits.
+- **t=1** — Database responds "Order placed successfully!"
+- **t=2** — Server crashes (power outage, hardware failure)
+- **t=3** — Server restarts
 
 Without Durability: 
   The committed transaction might have been in memory and not yet 
   written to disk. After restart, the order doesn't exist.
   User paid money but has no order. Catastrophic.
 
-With Durability:
+**With Durability:**
   When the transaction committed at t=0, the database wrote it to
   its transaction log on disk immediately BEFORE responding to the user.
   After restart at t=3, the database replays its transaction log.
   The order is fully restored. Nothing was lost.
-```
 
 ### What SQL Is Great At — JOINs and Complex Queries
 
@@ -345,7 +339,7 @@ The simplest NoSQL type. Exactly what the name says — you store a value associ
 
 ```
 Key                          →  Value
-─────────────────────────────────────────────────────────────────
+
 "session:user_123"           →  { "name": "Rahul", "cart": [...], "logged_in_at": "..." }
 "cache:product_456"          →  { "name": "Dell XPS", "price": 85000, ... }
 "rate_limit:ip_192.168.1.1"  →  "47"  (number of requests in the last minute)
@@ -384,7 +378,6 @@ Row 2: [id=2, name=Rahul,  age=25, city=Mumbai, created=...]
 
 Reading a row → fast (all columns adjacent)
 Reading one column from ALL rows → slow (must read every row's data)
-
 
 Column-based storage (Cassandra):
 All values of one column are physically adjacent on disk:
@@ -472,7 +465,7 @@ This is a fundamental architectural difference, not just a performance differenc
 
 ```
 SQL SCALING PATH:
-─────────────────────────────────────────────────────────
+
 Single server
     │
     ▼ (vertical scaling — upgrade hardware)
@@ -491,9 +484,8 @@ Data split across N servers BUT:
 This is why SQL is called "primarily vertically scalable."
 The horizontal path exists but kills SQL's core strengths.
 
-
 NoSQL SCALING PATH:
-─────────────────────────────────────────────────────────
+
 Single node
     │
     ▼ (add more nodes — horizontal scaling built-in)
@@ -537,7 +529,7 @@ Don't think of this as a simple checklist. Think about it as a series of questio
 
 ```
 STRUCTURED (fixed, well-defined schema) → SQL
-────────────────────────────────────────────────────────────
+
 Bank accounts:
   Every account always has: account_number, holder_name, 
   balance, account_type, branch_code, IFSC
@@ -548,9 +540,8 @@ Customer records in e-commerce:
   Every customer always has: name, email, address, phone
   Use SQL.
 
-
 UNSTRUCTURED / FLEXIBLE SCHEMA → NoSQL
-────────────────────────────────────────────────────────────
+
 Product catalog on Amazon:
   A book has: ISBN, author, page_count, publisher
   A shoe has: size, color, material, gender
@@ -569,7 +560,7 @@ User activity logs:
 
 ```
 YES — Data integrity is non-negotiable → SQL
-────────────────────────────────────────────────────────────
+
 Financial transactions (banking, payments, stock trading):
   "Deduct from account A AND add to account B" must be atomic.
   You CANNOT have money disappear in the middle of a transfer.
@@ -584,9 +575,8 @@ Medical records:
   Partial writes to a patient record could be life-threatening.
   Use SQL.
 
-
 NO — Eventual consistency is acceptable → NoSQL is viable
-────────────────────────────────────────────────────────────
+
 Social media feed:
   If someone's like count shows 1,247 for one user and 1,249 
   for another user for 50 milliseconds, nobody is harmed.
@@ -601,31 +591,28 @@ Product recommendations:
 
 ```
 READ-HEAVY with complex queries (analytics, reporting) → SQL
-────────────────────────────────────────────────────────────
+
 "Show sales by region, by product category, for Q3 2024,
  grouped by week, compared to Q3 2023"
 This is a complex aggregation across multiple tables.
 SQL with proper indexes handles this beautifully.
 NoSQL would require you to pre-compute all possible views — impractical.
 
-
 WRITE-HEAVY with simple reads (time-series, logging) → Cassandra / DynamoDB
-────────────────────────────────────────────────────────────
+
 GPS location of 500,000 delivery drivers updating every 5 seconds:
   2.5 million writes per second
   Read pattern: "Where is driver_X right now?" — simple key lookup
   Cassandra or DynamoDB handles this natively.
   PostgreSQL would melt under 2.5 million writes/sec.
 
-
 CACHING, SESSION, RATE LIMITING → Redis
-────────────────────────────────────────────────────────────
+
 Always. For any sub-millisecond read/write requirement.
 Redis is the default answer.
 
-
 RELATIONSHIP-HEAVY (social graphs, fraud detection) → Neo4j
-────────────────────────────────────────────────────────────
+
 When the relationships between entities ARE the data.
 When you need multi-hop traversals (friends of friends of friends).
 ```
@@ -693,7 +680,7 @@ A monolithic application is one where ALL the functionality lives in a single co
 
 ```
 E-COMMERCE MONOLITH:
-─────────────────────────────────────────────────────────────────
+
 One giant backend application (say, a single Node.js/Java/Django app)
 
 app/
@@ -735,8 +722,7 @@ When you deploy this app, you deploy the entire thing. When you restart it, ever
 
 **Problem 1: Scaling is all-or-nothing**
 
-```
-Scenario: It's Diwali sale season. The Product Service 
+**Scenario:** It's Diwali sale season. The Product Service 
 (search, listings, browsing) gets 100x normal traffic.
 The User Service (login, profile) gets only 5x traffic.
 The Payment Service gets 20x traffic.
@@ -751,39 +737,35 @@ To handle the Product Service load:
   only need 5-10 instances.
   
 Cost: You're paying for 50 instances when you needed
-      50 for product, 5 for user, 10 for payment.
-      You're wasting money on 35 unnecessary user service instances
-      and 40 unnecessary payment service instances.
-```
+    50 for product, 5 for user, 10 for payment.
+    You're wasting money on 35 unnecessary user service instances
+    and 40 unnecessary payment service instances.
 
 **Problem 2: One failure brings everything down**
 
-```
 Timeline of a typical monolith failure:
 
-t=0:  A developer pushes a bug in the Recommendation feature.
-      The bug causes an infinite loop in the recommendation algorithm.
+- **t=0** — A developer pushes a bug in the Recommendation feature.
+    The bug causes an infinite loop in the recommendation algorithm.
 
-t=1:  Recommendation requests start consuming 100% CPU each.
+- **t=1** — Recommendation requests start consuming 100% CPU each.
 
-t=2:  CPU on all servers hits 100%.
-      New incoming requests queue up and time out.
-      
-t=3:  Users can't log in.         ← Not the recommendation feature's fault
-      Users can't view products.  ← Not the recommendation feature's fault
-      Users can't check out.      ← Not the recommendation feature's fault
-      Users can't pay.            ← Not the recommendation feature's fault
-      EVERYTHING IS DOWN because one module has a bug.
+- **t=2** — CPU on all servers hits 100%.
+    New incoming requests queue up and time out.
+    
+- **t=3** — Users can't log in.         ← Not the recommendation feature's fault
+    Users can't view products.  ← Not the recommendation feature's fault
+    Users can't check out.      ← Not the recommendation feature's fault
+    Users can't pay.            ← Not the recommendation feature's fault
+    EVERYTHING IS DOWN because one module has a bug.
 
 Recovery:
   Rollback the entire deployment.
   All features are down during rollback (5-15 minutes).
   Revenue lost: enormous.
-```
 
 **Problem 3: Tech stack is locked in**
 
-```
 When you started the company, you chose Java.
 Your entire monolith is Java.
 
@@ -795,11 +777,9 @@ Golang is far better for high-throughput data pipelines.
 But your entire codebase is Java.
 You can't "add a bit of NodeJS" to a Java monolith.
 Your hands are tied.
-```
 
 **Problem 4: Deployment is slow and risky**
 
-```
 In a monolith, to fix a 1-line bug in the Payment module:
 
 1. Run the full test suite for the ENTIRE application (takes 45 minutes)
@@ -809,7 +789,6 @@ In a monolith, to fix a 1-line bug in the Payment module:
 
 50 developers all wanting to deploy → coordination bottlenecks.
 One bad deployment by Developer A can block Developers B through Z.
-```
 
 ---
 
@@ -826,7 +805,6 @@ Microservices is an architectural style where you break your application into sm
 
 ```
 E-COMMERCE WITH MICROSERVICES:
-─────────────────────────────────────────────────────────────────
 
 Service 1: User Service          Service 2: Product Service
 ┌─────────────────────┐          ┌─────────────────────┐
@@ -890,7 +868,6 @@ flowchart TB
 
 ### Independent Scaling — The Biggest Win
 
-```
 DIWALI SALE TRAFFIC:
 
 User Service:     5x traffic needed  → Run 2 instances
@@ -907,22 +884,19 @@ Even User Service runs at 80 instances when 2 is enough.
 
 Microservices: Pay for exactly what each service needs.
 Monolith:      Pay for the maximum any single module needs, applied to ALL.
-```
 
 ### Fault Isolation — Failures Stay Contained
 
-```
-Scenario: The Recommendation Service has a memory leak bug.
+**Scenario:** The Recommendation Service has a memory leak bug.
 
-WITH MICROSERVICES:
-t=0:  Recommendation Service crashes.
-      User, Product, Order, Payment services: still running.
-      Impact: "You might also like..." missing — site still works.
+**WITH MICROSERVICES:**
+- **t=0** — Recommendation Service crashes.
+    User, Product, Order, Payment services: still running.
+    Impact: "You might also like..." missing — site still works.
 
-WITH MONOLITH:
-t=0:  Recommendation module leaks memory → entire app crashes.
-      Login, products, checkout, payments: all down.
-```
+**WITH MONOLITH:**
+- **t=0** — Recommendation module leaks memory → entire app crashes.
+    Login, products, checkout, payments: all down.
 
 ### Technology Flexibility — Each Service Uses the Best Tool
 
@@ -939,8 +913,7 @@ t=0:  Recommendation module leaks memory → entire app crashes.
 
 ### The Problem Without an API Gateway
 
-```
-WITHOUT API GATEWAY:
+**WITHOUT API GATEWAY:**
 
 Mobile App must know:
   User Service:           http://192.168.24.32:3001
@@ -954,7 +927,6 @@ PROBLEMS:
 3. Rate limiting duplicated everywhere
 4. SSL on every service
 5. Debugging spans 6 log formats
-```
 
 ### What the API Gateway Does
 
@@ -1021,7 +993,6 @@ The gateway talks to each service's load balancer — it doesn't need to know in
 
 ### Start With a Monolith
 
-```
 EARLY-STAGE STARTUP:
 
 Team size: 2-3 developers
@@ -1033,15 +1004,12 @@ Microservices overhead before business logic:
   - Weeks of infrastructure work
 
 Benefit at this stage: Near zero. Start monolith. Ship fast.
-```
 
 > **Conway's Law:** Organizations design systems that mirror their communication structure. **Microservice boundaries should align with team boundaries.**
 
-```
 If you have 1 team of 5 people        → Monolith is fine
 If you have 2 teams (User vs Product) → ~2 services
 If you have 5 teams                   → ~5 services (one per team)
-```
 
 ### Signs You're Ready for Microservices
 
@@ -1090,7 +1058,6 @@ Over 9 requests: each server gets exactly 3. Perfectly even.
 
 Round Robin assumes all requests and all servers are equal. Both are often wrong.
 
-```
 Request A: 4K video upload — 30 seconds, CPU-heavy → Server-1
 Request B: Profile page — 20ms → Server-2
 
@@ -1098,7 +1065,6 @@ Next 60 lightweight requests:
 Round Robin still sends some to Server-1 while it's at 95% CPU.
 Users on Server-1 wait seconds for a simple profile page.
 Server-2 and Server-3 are mostly idle.
-```
 
 ### When Round Robin Is Appropriate
 
@@ -1114,7 +1080,6 @@ Server-2 and Server-3 are mostly idle.
 
 Each server has a **weight**. Weight 3 gets 3× the traffic of weight 1.
 
-```
 Server-1: weight = 1  (2 cores)
 Server-2: weight = 1  (2 cores)
 Server-3: weight = 3  (6 cores, 16 GB)
@@ -1125,7 +1090,6 @@ Over 10 requests:
 Server-1: 2 (20%)
 Server-2: 2 (20%)
 Server-3: 6 (60%)  ← matches 3/5 weight ratio
-```
 
 ### The Limitation
 
@@ -1141,31 +1105,25 @@ Weights are **static**. If Server-3 runs a background job and effective capacity
 
 Route each new request to the server with the **fewest active connections**.
 
-```
 Server-1: 45 active connections
 Server-2: 12 active connections   ← next request here
 Server-3: 38 active connections
 
 After routing: Server-2 has 13 connections.
-```
 
 ### Why This Beats Round Robin for Variable Workloads
 
-```
 Heavy video on Server-1 (30s, 11 connections).
 Light profile requests go to Server-2 and Server-3 (fewest connections).
 Server-1 protected until the video finishes.
-```
 
 ### The Subtlety: Connections ≠ CPU
 
-```
 Server-1: 50 idle WebSocket connections (0.01% CPU each)
 Server-2: 5 heavy DB queries (100% CPU total)
 
 Least Connections picks Server-2 — wrong!
 Advanced LBs can route by actual CPU utilization instead.
-```
 
 **Used by:** nginx, HAProxy (`least_conn`)
 
@@ -1185,12 +1143,10 @@ Request 3: View cart  → Server-3 (empty cart!)
 
 ### How IP Hash Works
 
-```
 server_index = HASH(client_IP) % number_of_servers
 
 192.168.1.100 → always Server-1
 10.0.0.55     → always Server-3
-```
 
 ### Problems With IP Hash
 

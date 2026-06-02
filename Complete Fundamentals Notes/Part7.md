@@ -188,7 +188,6 @@ KEY PROPERTIES:
 
 ### How Producers Choose a Partition
 
-```
 STRATEGY 1: Round Robin (no message key)
   Message 1 → P0, Message 2 → P1, Message 3 → P2, Message 4 → P3, ...
   Use when: even distribution, ordering doesn't matter
@@ -206,7 +205,6 @@ STRATEGY 2: Key-Based Partitioning (recommended for entity ordering)
 STRATEGY 3: Custom Partitioner
   Your code picks partition by business logic
   Example: partition by geography (North/South/East/West India)
-```
 
 ---
 
@@ -218,7 +216,6 @@ Consumer groups serve **two** purposes.
 
 Topic with 4 partitions, 3 consumers in group `"email-workers"`:
 
-```
 Kafka assigns partitions:
   Consumer-1 → Partition-0
   Consumer-2 → Partition-1 AND Partition-2
@@ -234,11 +231,9 @@ WHY can't two consumers in the SAME group read the same partition?
   Consumer-1 sends it. Consumer-2 sends it again. Duplicate.
 
 Kafka assigns each partition to at most one consumer per group.
-```
 
 **More consumers than partitions:**
 
-```
 4 partitions, 5 consumers in same group:
 
   Consumer-1 → P0
@@ -250,14 +245,12 @@ Kafka assigns each partition to at most one consumer per group.
 RULE: Active consumers ≤ partitions in a group.
 
 LESSON: Need N parallel workers → create at least N partitions upfront.
-        (Adding partitions later changes HASH % N — affects key ordering)
-```
+      (Adding partitions later changes HASH % N — affects key ordering)
 
 ### Kafka Rebalancing
 
 Rebalancing reassigns partitions when group membership changes.
 
-```
 TRIGGER 1: New consumer joins
   All consumers pause briefly ("stop the world") during reassignment
   Kafka 2.4+ cooperative rebalancing: unaffected consumers keep consuming
@@ -268,7 +261,6 @@ TRIGGER 2: Consumer crashes or leaves
 
 TRIGGER 3: Session timeout (no heartbeat in session.timeout.ms, default 10s)
   Kafka assumes consumer dead → rebalance
-```
 
 ### Purpose 2: Fan-Out Across Different Consumer Groups
 
@@ -298,7 +290,6 @@ One write. Many consumer groups. Write once, read by many.
 
 Each group commits a **bookmark** per partition — stored in Kafka's internal topic `__consumer_offsets`.
 
-```
 GROUP "caption-generator-group":
   P0: committed offset = 47  (processed 0–46)
   P1: committed offset = 51
@@ -319,7 +310,6 @@ MANUAL COMMIT (recommended):
   transcodeVideo(message);
   uploadToS3(result);
   consumer.commitSync();  // only after success
-```
 
 ---
 
@@ -343,12 +333,11 @@ flowchart TB
     end
 ```
 
-```
 KAFKA / MESSAGE QUEUE (Pull):
   while True:
-      messages = consumer.poll(timeout=1000ms)
-      for msg in messages: process(msg)
-      consumer.commitSync()
+    messages = consumer.poll(timeout=1000ms)
+    for msg in messages: process(msg)
+    consumer.commitSync()
 
   Consumer pulls at its own pace
   Slow consumer → messages pile up in broker
@@ -361,7 +350,6 @@ REDIS PUB/SUB (Push):
 Trade-off:
   Pub/Sub: ultra-low latency, no persistence
   Kafka:   reliable delivery, retained log
-```
 
 ---
 
@@ -388,7 +376,6 @@ PATTERN SUBSCRIBE:
 
 ### Why Chat Needs WebSockets
 
-```
 HTTP POLLING (bad):
   Client asks every second: "Any messages?"
   1M users = 1M requests/sec even when idle
@@ -399,11 +386,9 @@ WEBSOCKET (correct):
   One persistent bidirectional connection
   Server pushes instantly when message arrives
   Client sends without new HTTP handshake
-```
 
 ### The Horizontal Scaling Problem
 
-```
 Room #42:
   Rahul  → WebSocket on Server-1
   Ankit  → WebSocket on Server-1
@@ -413,7 +398,6 @@ Rahul sends "Hey Shivam!" to Server-1
 Server-1 only knows its own connections (Rahul, Ankit)
 Shivam is on Server-2 — Server-1 cannot push to him
 Message never reaches Shivam. Chat broken.
-```
 
 ### Redis Pub/Sub as Cross-Server Bus
 
@@ -433,7 +417,6 @@ sequenceDiagram
     S2->>Sh: deliver to Shivam
 ```
 
-```
 Both Server-1 and Server-2 SUBSCRIBE to "chat:room:42"
 
 Rahul sends message:
@@ -445,7 +428,6 @@ Rahul sends message:
 
 Add Server-3, Server-4 — all subscribe. All deliver to their clients.
 Scales horizontally.
-```
 
 ### Complete Code Architecture
 

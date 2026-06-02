@@ -516,10 +516,8 @@ These two are **RELATED** but **DIFFERENT**, and can sometimes **conflict**.
 
 #### Little's Law (fundamental theorem of queuing systems)
 
-```
 Throughput (λ) = Concurrent Users (L) / Latency (W)
 → Or: L = λ × W
-```
 
 If you have more concurrent users and the same throughput, **latency increases**. To serve more users at the same latency, you must **increase throughput**.
 

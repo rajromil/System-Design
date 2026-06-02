@@ -51,20 +51,18 @@ Now imagine 10,000 users hit `/blogs` every minute. That's 10,000 times your dat
 
 This is the problem caching solves. You compute the result ONCE, store it somewhere ultra-fast, and serve all 10,000 users from that fast store. The database doesn't even know the other 9,999 requests happened.
 
-```
-WITHOUT CACHING:
+**WITHOUT CACHING:**
 10,000 requests/minute
 → 10,000 database queries/minute
 → Database at 80% load
 → 360ms response time for everyone
 
-WITH CACHING:
+**WITH CACHING:**
 10,000 requests/minute
 → 1 database query (first request only, or after cache expires)
 → 9,999 requests served from Redis
 → Database at ~1% load
 → 20ms response time for everyone
-```
 
 That's not a 2x improvement. That's a 9,999x reduction in database load and an 18x improvement in response time. This is why caching is one of the highest-leverage things you can add to any system.
 
@@ -170,7 +168,6 @@ And the cycle repeats every 24 hours.
 
 **Choosing the right TTL is a genuine design decision:**
 
-```
 Very short TTL (seconds to minutes):
   Good for: Live sports scores, stock prices, real-time dashboards
   Trade-off: Cache provides less benefit (expires too often)
@@ -186,22 +183,20 @@ Long TTL (hours to days):
 No TTL (infinite):
   Good for: Truly static data (country list, currency codes)
   Trade-off: Must invalidate manually when data changes
-```
 
 ### Strategy 2: Active Invalidation on Write — Delete or Update Cache When Data Changes
 
 Instead of waiting for TTL to expire, you actively delete or update the cache the moment the underlying data changes.
 
-```
-SCENARIO: New blog post published.
+**SCENARIO:** New blog post published.
 
-WITHOUT ACTIVE INVALIDATION:
+**WITHOUT ACTIVE INVALIDATION:**
   - New blog saved to database
   - Cache still has old blog list ← STALE
   - Users see old list until TTL expires (could be 23 hours!)
   - "Where's my new blog? I just published it!" — author is confused
 
-WITH ACTIVE INVALIDATION:
+**WITH ACTIVE INVALIDATION:**
   - New blog saved to database
   - Server immediately: DEL blogData (deletes from Redis)
   - Next user to request /blogs → Cache MISS → fetches fresh data with new blog
@@ -213,13 +208,11 @@ Code flow:
 await database.insert(newBlog);         // Save to DB
 await redisClient.del('blogData');      // Invalidate cache
 // Done. Next request will re-populate the cache automatically.
-```
 
 **Pattern: Cache-Aside (most common)**
 
 This is the most widely used caching pattern. The application code manages when to read from cache and when to invalidate.
 
-```
 READ path (cache-aside):
 1. Check cache
 2. If HIT: return cached data
@@ -232,7 +225,6 @@ WRITE path (cache-aside):
 
 Simple, but requires both DB write AND cache delete to succeed.
 If cache delete fails, cache is stale until TTL expires.
-```
 
 **Pattern: Write-Through Cache**
 
@@ -300,7 +292,6 @@ Caching isn't just Redis on a server. It happens at multiple layers of the entir
 
 When you visit a website, your browser automatically caches certain resources locally on your device. The next time you visit, those resources load from your local disk instead of being downloaded again.
 
-```
 First visit to www.flipkart.com:
 Browser downloads:
   - flipkart-logo.png     (150 KB)   → Cache-Control: max-age=31536000 (1 year)
@@ -319,11 +310,9 @@ Browser checks cache:
   
 Total downloaded: ~50 KB (just the HTML). Page loads in 0.3 seconds.
 10x faster on the second visit.
-```
 
 The server controls browser caching behavior through HTTP response headers:
 
-```
 Cache-Control: max-age=31536000    ← Cache for 1 year (static assets with content hash in filename)
 Cache-Control: no-cache            ← Always validate with server before using cached version
 Cache-Control: no-store            ← Never cache (sensitive data like banking pages)
@@ -331,14 +320,12 @@ Cache-Control: private             ← Cache only in browser, not in intermediat
 Cache-Control: public              ← Can be cached by browser AND CDNs
 
 ETag: "abc123"                     ← A fingerprint of the content.
-                                    Browser sends: "If-None-Match: abc123"
-                                    Server: "Content hasn't changed → 304 Not Modified"
-                                    Browser: Uses cached version. No download needed.
-```
+                                  Browser sends: "If-None-Match: abc123"
+                                  Server: "Content hasn't changed → 304 Not Modified"
+                                  Browser: Uses cached version. No download needed.
 
 **Why static assets use content hashes in their filenames:**
 
-```
 When you deploy new code, Webpack/Vite generates filenames like:
   main.a3f8b2c.js   (the hash changes every time code changes)
 
@@ -352,7 +339,6 @@ This gives you:
   - Infinite cache TTL (safe because filename changes on every deploy)
   - Instant cache busting on new deployments (new filename = cache miss)
 This technique is called "cache busting."
-```
 
 ### 2. Server-Side Cache (Redis, Memcached)
 
@@ -362,8 +348,7 @@ This is what most people mean when they say "caching" in a backend context. Data
 
 A CDN is a globally distributed network of servers (called "edge servers" or "Points of Presence" — PoPs) that cache your content close to your users geographically.
 
-```
-WITHOUT CDN:
+**WITHOUT CDN:**
 User in Chennai wants to watch a video hosted on servers in Mumbai.
 
 Journey: Chennai user → Internet → Mumbai Data Center → back to Chennai
@@ -376,7 +361,7 @@ For a 100 MB video:
   Entire file travels 1300 km from Mumbai
   If Mumbai is under load (lots of users): slowdowns, buffering
 
-WITH CDN:
+**WITH CDN:**
 User in Chennai wants to watch the same video.
 
 First user from Chennai to watch this video:
@@ -396,11 +381,9 @@ A user in New York gets images from a New York edge server.
 A user in London gets images from a London edge server.
 The origin server in Mumbai is only contacted when a PoP 
 doesn't have the content yet.
-```
 
 **What gets cached at CDN vs what doesn't:**
 
-```
 CACHE AT CDN (static content that doesn't change per user):
   - Images (product photos, logos, banners)
   - Videos
@@ -415,7 +398,6 @@ DO NOT CACHE AT CDN (dynamic content specific to a user):
   - Authentication tokens or session data
   - Payment pages
   - Any page showing personalized data
-```
 
 ### 4. Application-Level Cache
 
@@ -444,7 +426,6 @@ async function getExpensiveComputationResult(input) {
 
 **Difference between application cache and Redis:**
 
-```
 Application-Level Cache (in-process Map/Dict):
   + Absolute fastest — no network call, just memory lookup
   - Lost when server restarts
@@ -457,7 +438,6 @@ Redis (out-of-process):
   + Has TTL support, rich data types, pub/sub
   - Requires a network call (still very fast: 1-5ms)
   + Good for: Session data, shared computed results
-```
 
 ---
 
@@ -469,7 +449,6 @@ Redis stands for **RE**mote **DI**ctionary **S**erver. The word "dictionary" is 
 
 **Why RAM makes Redis so fast:**
 
-```
 Storage medium comparison:
 
 HDD (Hard Disk Drive):
@@ -483,11 +462,9 @@ RAM (Random Access Memory):
   Typical Redis lookup latency: ~0.1-1ms (includes network)
 
 Redis can handle 100,000 to 1,000,000 operations/sec on one instance.
-```
 
 **Why not use Redis for EVERYTHING if it's so fast?**
 
-```
 RAM:
   Speed: Blazing fast
   Cost: Expensive
@@ -500,13 +477,11 @@ SSD/Disk:
 
 So we cache only hot data in Redis.
 80/20 rule: 80% of requests often hit 20% of data.
-```
 
 ### Redis Key Naming Conventions
 
 Redis keys are strings, but conventions matter.
 
-```
 Use colon-separated namespaces:
 
 user:1
@@ -521,7 +496,6 @@ otp:phone:9876543210
 
 Pattern scanning:
 SCAN 0 MATCH "user:*"
-```
 
 ---
 
@@ -553,7 +527,6 @@ Real-world string use cases:
 
 ### Data Type 2: Lists
 
-```
 LPUSH user Amit
 RPUSH user Abhay
 LLEN user
@@ -561,7 +534,6 @@ LPOP user
 RPOP user
 LRANGE user 0 -1
 BRPOP job_queue 30
-```
 
 Use cases:
 - FIFO job queues
@@ -571,13 +543,11 @@ Use cases:
 
 ### Data Type 3: Hashes
 
-```
 HSET user:1 name "Shivam" age 21 city "Delhi" email "shivam@gmail.com"
 HGET user:1 name
 HGETALL user:1
 HMGET user:1 name email
 HDEL user:1 city
-```
 
 Use cases:
 - User profiles
@@ -587,7 +557,6 @@ Use cases:
 
 ### Data Type 4: Sets
 
-```
 SADD active_users "user_1" "user_2" "user_3"
 SMEMBERS active_users
 SISMEMBER active_users "user_2"
@@ -596,7 +565,6 @@ SCARD active_users
 SINTER team_a team_b
 SUNION team_a team_b
 SDIFF team_a team_b
-```
 
 Use cases:
 - Unique visitors
@@ -606,7 +574,6 @@ Use cases:
 
 ### Data Type 5: Sorted Sets (ZSets)
 
-```
 ZADD leaderboard 9850 "player_rahul"
 ZADD leaderboard 9920 "player_shivam"
 ZRANGE leaderboard 0 -1 WITHSCORES
@@ -615,7 +582,6 @@ ZRANK leaderboard "player_rahul"
 ZREVRANK leaderboard "player_rahul"
 ZINCRBY leaderboard 500 "player_ankit"
 ZSCORE leaderboard "player_shivam"
-```
 
 Use cases:
 - Leaderboards
@@ -693,13 +659,11 @@ async function submitSolution(userId, problemId, solution) {
 
 Cache hit rate = (cache hits) / (total requests) × 100%
 
-```
 Example:
 Total requests: 100,000
 Cache hits:      95,000
 Cache misses:     5,000
 Hit rate: 95%
-```
 
 Interpretation:
 - `<50%`: caching strategy likely weak
@@ -749,7 +713,6 @@ Mitigations:
 
 ### Redis Persistence
 
-```
 RDB snapshots:
   save 900 1
   save 300 10
@@ -760,7 +723,6 @@ AOF:
 
 Common production setup:
   Use both RDB + AOF.
-```
 
 ### Redis Cluster
 

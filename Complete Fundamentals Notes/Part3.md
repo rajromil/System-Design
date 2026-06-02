@@ -201,7 +201,6 @@ Event 2: User B (in Delhi) reads from Hyderabad Node:
 
 **Case 1: You prioritize Consistency (CP)**
 
-```
 Mumbai Node receives the write: age = 22
 Mumbai Node tries to propagate to Hyderabad and Bihar.
 Mumbai Node CANNOT REACH Hyderabad and Bihar (partition!).
@@ -209,25 +208,23 @@ Mumbai Node CANNOT REACH Hyderabad and Bihar (partition!).
 What does a consistent system do?
 It REFUSES to confirm the write until all nodes agree.
 Response to User A: "ERROR: Cannot complete write. 
-                     Network partition in progress.
-                     Please try again later."
+                   Network partition in progress.
+                   Please try again later."
 
 Meanwhile, Hyderabad receives User B's read.
 What does a consistent system do?
 It knows a partition exists. It knows it might have missed
 some writes. To maintain consistency, it REFUSES to respond.
 Response to User B: "ERROR: System unavailable. 
-                     Partition in progress.
-                     Please try again later."
+                   Partition in progress.
+                   Please try again later."
 
 RESULT: Both users got errors. Nobody got stale data.
-        Data is consistent (nobody saw wrong data).
-        But the system was unavailable (CP achieved, A sacrificed).
-```
+      Data is consistent (nobody saw wrong data).
+      But the system was unavailable (CP achieved, A sacrificed).
 
 **Case 2: You prioritize Availability (AP)**
 
-```
 Mumbai Node receives the write: age = 22
 Mumbai Node can't reach Hyderabad and Bihar. But you know what?
 Mumbai Node says: "Fine, I'll write locally. I'll sync later."
@@ -244,13 +241,11 @@ Response to User B: "age = 21"
 But the actual correct value is now 22.
 
 RESULT: Both users got responses (system was available).
-        But User B got stale data (age = 21 instead of 22).
-        Consistency was sacrificed (AP achieved, C sacrificed).
-```
+      But User B got stale data (age = 21 instead of 22).
+      Consistency was sacrificed (AP achieved, C sacrificed).
 
 **Why Can't We Have All Three?**
 
-```
 To achieve ALL THREE (CAP), you'd need to:
 1. Respond to every request (A)
 2. Always return correct/latest data (C)
@@ -268,7 +263,6 @@ The logical impossibility: During a partition,
 maintaining consistency requires not responding (sacrificing A),
 and maintaining availability requires responding (sacrificing C).
 You cannot do both simultaneously. QED.
-```
 
 ```mermaid
 flowchart TD
@@ -295,9 +289,7 @@ So the real choice is always: **CP vs AP**. Not CA vs CP vs AP.
 
 ### Real-World Examples
 
-```
 CP Systems (Consistency over Availability):
-─────────────────────────────────────────────
 HBase, Zookeeper, MongoDB (in certain configs)
 
 Example behavior during partition:
@@ -305,9 +297,7 @@ User: "Transfer ₹10,000 from my account"
 System: "Service temporarily unavailable. Please try again."
 User is frustrated but no money was lost or duplicated.
 
-
 AP Systems (Availability over Consistency):
-─────────────────────────────────────────────
 Cassandra, DynamoDB (eventually consistent mode), CouchDB
 
 Example behavior during partition:
@@ -316,7 +306,6 @@ User B: (looking at same post) → System returns: 1,246
 They're seeing slightly different values for the same data.
 This is called "eventual consistency" — given time with no new writes,
 all nodes will eventually converge to the same value.
-```
 
 ### Eventual Consistency — A Key AP Concept
 
@@ -339,27 +328,25 @@ sequenceDiagram
     Note over M,B: t=7 — All nodes: age = 22 (consistent)
 ```
 
-```
 Timeline of an AP system during and after a partition:
 
-t=0:  All nodes: Shivam age = 21
-t=1:  PARTITION occurs
-t=2:  Write hits Mumbai: age = 22
-      Mumbai: age = 22
-      Hyderabad: age = 21   ← stale
-      Bihar: age = 21       ← stale
-t=3:  Reads from Hyderabad return age = 21 (stale but available)
-t=4:  PARTITION HEALS. Network restored.
-t=5:  Mumbai tells Hyderabad: "I have age = 22, update yourself"
-      Hyderabad updates to age = 22
-t=6:  Mumbai tells Bihar: "I have age = 22, update yourself"
-      Bihar updates to age = 22
-t=7:  All nodes: Shivam age = 22  ← eventually consistent!
+- **t=0** — All nodes: Shivam age = 21
+- **t=1** — PARTITION occurs
+- **t=2** — Write hits Mumbai: age = 22
+    Mumbai: age = 22
+    Hyderabad: age = 21   ← stale
+    Bihar: age = 21       ← stale
+- **t=3** — Reads from Hyderabad return age = 21 (stale but available)
+- **t=4** — PARTITION HEALS. Network restored.
+- **t=5** — Mumbai tells Hyderabad: "I have age = 22, update yourself"
+    Hyderabad updates to age = 22
+- **t=6** — Mumbai tells Bihar: "I have age = 22, update yourself"
+    Bihar updates to age = 22
+- **t=7** — All nodes: Shivam age = 22  ← eventually consistent!
 
 Between t=2 and t=6, different nodes had different values.
 After t=7, they're consistent again.
 This is "eventual" consistency — not instant, but guaranteed.
-```
 
 ---
 
@@ -434,7 +421,6 @@ SELECT * FROM users WHERE id = 7,432,891;
 
 Without an index, the database has absolutely no idea where row #7,432,891 is. There's no directory. So it does the only thing it can: read every single row from disk, check if the id matches, and if not, move to the next one.
 
-```
 Full Table Scan:
 Read row 1: id=1? No.
 Read row 2: id=2? No.
@@ -446,7 +432,6 @@ Read row 7,432,891: id=7,432,891? YES! Found it.
 Total rows checked: 7,432,891
 Time: proportional to N (number of rows)
 At 50 million rows, worst case: check all 50 million rows.
-```
 
 If this query runs 10,000 times per second (10,000 users loading their profiles), you're doing 500 billion row comparisons per second. Your database melts.
 
@@ -483,7 +468,6 @@ For 50 million rows: log₂(50,000,000) ≈ 26 comparisons
 
 This is the difference between **O(N) and O(log N)**:
 
-```
 Table with 50 million rows:
 
 Without index: Up to 50,000,000 comparisons
@@ -491,7 +475,6 @@ With index:    Up to log₂(50,000,000) ≈ 26 comparisons
 
 26 vs 50,000,000 — that's a 2 million times speedup.
 A 2ms query becomes ~0.000001ms effectively.
-```
 
 ```mermaid
 flowchart TD
@@ -560,7 +543,6 @@ CREATE INDEX idx_name_city ON users(last_name, city);
 Your table now has 10 billion rows. Even with a B-Tree index, there are new problems:
 
 **Problem 1: The index file itself is huge.**
-```
 Each B-Tree entry for the 'id' column takes about 20-30 bytes.
 10 billion entries × 25 bytes = 250 GB just for the index.
 
@@ -568,7 +550,6 @@ When you do a search, the database reads nodes from this 250 GB index file.
 The nodes that get accessed frequently are in memory (buffer pool/cache).
 But the index is so large that much of it doesn't fit in RAM.
 So the database has to read from disk → slow.
-```
 
 **Problem 2: Sequential scans of ranges are slow.**
 ```sql
@@ -639,7 +620,6 @@ PostgreSQL looks at the query, sees `id = 7,432,891,234`, knows that 7.4 billion
 
 **Types of Partitioning:**
 
-```
 RANGE PARTITIONING (by value range):
 user_table_1: id 1 to 1,000,000
 user_table_2: id 1,000,001 to 2,000,000
@@ -653,12 +633,10 @@ This is extremely useful for time-series data.
 You can drop an entire month's partition (old logs, old orders)
 in milliseconds — much faster than DELETE which processes row by row.
 
-
 LIST PARTITIONING (by specific values):
 users_india:   country = 'IN'
 users_usa:     country = 'US'
 users_others:  country NOT IN ('IN', 'US')
-
 
 HASH PARTITIONING (by hash of a column):
 HASH(id) % 4 = 0 → partition_0
@@ -666,7 +644,6 @@ HASH(id) % 4 = 1 → partition_1
 HASH(id) % 4 = 2 → partition_2
 HASH(id) % 4 = 3 → partition_3
 Ensures even distribution regardless of id values.
-```
 
 ---
 
@@ -680,7 +657,6 @@ One database server, even a powerful one, might handle 100,000-200,000 simple re
 
 The key insight for this solution is: **reads and writes have very different requirements.**
 
-```
 WRITE requirements:
 - Must be ACID-compliant (Atomic, Consistent, Isolated, Durable)
 - Must not lose data
@@ -692,7 +668,6 @@ READ requirements:
 - Can tolerate slight staleness in many use cases
 - Can be distributed across many machines
 - Usually high volume — often 10x-100x more than writes
-```
 
 Since reads and writes have different needs, why should they compete for the same resources on the same machine? Master-Slave separates them.
 
@@ -734,7 +709,7 @@ flowchart TB
 
 ```
 WRITE PATH:
-──────────────────────────────────────────────────────────────
+
 Application Layer
        │
        │  INSERT INTO tweets VALUES (...)   ← write query
@@ -771,9 +746,8 @@ Each slave:
 - Stays as close to up-to-date as possible
 - Has its own indexes, its own query executor
 
-
 READ PATH:
-──────────────────────────────────────────────────────────────
+
 Application Layer
        │
        │  SELECT * FROM users WHERE id = 123  ← read query
@@ -803,47 +777,43 @@ This is one of the most important subtleties of master-slave architecture.
 
 **Asynchronous Replication (default):**
 
-```
 Timeline:
-t=0: Write arrives at Master ("SET age = 22")
-t=1: Master writes to its own disk → confirmed
-t=2: Master responds to application: "Write successful!"
-t=3: Master sends change to Slave 1 (network latency)
-t=4: Master sends change to Slave 2 (network latency)
-t=5: Slave 1 applies the change
-t=6: Slave 2 applies the change
+- **t=0** — Write arrives at Master ("SET age = 22")
+- **t=1** — Master writes to its own disk → confirmed
+- **t=2** — Master responds to application: "Write successful!"
+- **t=3** — Master sends change to Slave 1 (network latency)
+- **t=4** — Master sends change to Slave 2 (network latency)
+- **t=5** — Slave 1 applies the change
+- **t=6** — Slave 2 applies the change
 
 Problem: Between t=2 and t=5, if User B reads from Slave 1,
-         they get the OLD data (age = 21), not the new data (age = 22).
-         This is called "replication lag" — typically milliseconds to seconds.
+       they get the OLD data (age = 21), not the new data (age = 22).
+       This is called "replication lag" — typically milliseconds to seconds.
 
 Advantage: Write is fast (master doesn't wait for slaves)
 Disadvantage: Brief inconsistency (AP trade-off in CAP terms)
-```
 
 **Synchronous Replication:**
 
-```
 Timeline:
-t=0: Write arrives at Master ("SET age = 22")
-t=1: Master writes to its own disk
-t=2: Master sends change to Slave 1
-t=3: Master sends change to Slave 2
-t=4: Slave 1 confirms "I've applied the change"
-t=5: Slave 2 confirms "I've applied the change"
-t=6: Master responds to application: "Write successful!"
+- **t=0** — Write arrives at Master ("SET age = 22")
+- **t=1** — Master writes to its own disk
+- **t=2** — Master sends change to Slave 1
+- **t=3** — Master sends change to Slave 2
+- **t=4** — Slave 1 confirms "I've applied the change"
+- **t=5** — Slave 2 confirms "I've applied the change"
+- **t=6** — Master responds to application: "Write successful!"
 
 Now there is zero replication lag — all nodes have age = 22
 when the write is confirmed.
 
 Advantage: Strong consistency
 Disadvantage: Write latency is now (Master write time + 
-              slowest slave's replication time + network RTT)
-              If a slave is slow or the network is slow, 
-              every write in your system is slow.
-              If a slave goes down, writes block until it recovers
-              (or you configure it to proceed without that slave).
-```
+            slowest slave's replication time + network RTT)
+            If a slave is slow or the network is slow, 
+            every write in your system is slow.
+            If a slave goes down, writes block until it recovers
+            (or you configure it to proceed without that slave).
 
 Most production systems use **semi-synchronous** — at least one slave must confirm before the master responds, but not all slaves. This balances durability and performance.
 
@@ -855,42 +825,39 @@ Most production systems use **semi-synchronous** — at least one slave must con
 
 ### Replication Lag — When It's a Problem and Solutions
 
-```
 Scenario where lag is a REAL problem:
-─────────────────────────────────────────
 1. User posts a tweet: "Just got promoted! 🎉"
-   - Write goes to Master
-   - Master confirms "tweet saved"
-   - Page reloads
-   
+  - Write goes to Master
+  - Master confirms "tweet saved"
+  - Page reloads
+  
 2. User immediately visits their own profile to see the tweet
-   - Read goes to Slave 1
-   - Slave 1 hasn't received the replication yet (20ms lag)
-   - Slave 1 returns: "No tweets found"
-   
+  - Read goes to Slave 1
+  - Slave 1 hasn't received the replication yet (20ms lag)
+  - Slave 1 returns: "No tweets found"
+  
 3. User is confused: "Why didn't my tweet save?!"
-   They reload again 2 seconds later → now it's there
-   (replication caught up)
+  They reload again 2 seconds later → now it's there
+  (replication caught up)
 
 This "read your own write" problem is a classic 
 replication lag issue.
 
 SOLUTIONS:
 1. "Read your own writes" guarantee:
-   After a user WRITES something, route their next reads
-   to the MASTER for the next few seconds.
-   "I just wrote as user_123, so for the next 5 seconds,
-    reads from user_123 go to master."
-   
+  After a user WRITES something, route their next reads
+  to the MASTER for the next few seconds.
+  "I just wrote as user_123, so for the next 5 seconds,
+  reads from user_123 go to master."
+  
 2. Session consistency:
-   After any write, store a "read-from-master-until" timestamp.
-   Any read within that window goes to master.
-   
+  After any write, store a "read-from-master-until" timestamp.
+  Any read within that window goes to master.
+  
 3. Stale reads are acceptable:
-   For non-critical reads (like counts, recommendations),
-   just accept the slight staleness. Nobody cares if the 
-   "1,247 likes" is actually 1,249 for a few milliseconds.
-```
+  For non-critical reads (like counts, recommendations),
+  just accept the slight staleness. Nobody cares if the 
+  "1,247 likes" is actually 1,249 for a few milliseconds.
 
 ### What Happens When Master Fails — Failover
 
@@ -1043,7 +1010,6 @@ CONFLICT: Both masters updated the same row at the same time.
 
 **Strategy 1: Last Write Wins (LWW)**
 
-```
 Assign a timestamp to every write.
 Whichever write has the LATER timestamp wins.
 
@@ -1053,15 +1019,13 @@ South's write: timestamp = 14:23:01.461   ← later
 Final value everywhere: "Rahul Sharma"
 
 Problem: What if the clocks on the two servers are slightly out of sync?
-         (Clock drift is a real issue in distributed systems.)
-         If North's clock is 100ms ahead of South's clock, 
-         the "later" timestamp might be wrong.
-         Also, genuine user intent is lost — User A's change is silently discarded.
-```
+       (Clock drift is a real issue in distributed systems.)
+       If North's clock is 100ms ahead of South's clock, 
+       the "later" timestamp might be wrong.
+       Also, genuine user intent is lost — User A's change is silently discarded.
 
 **Strategy 2: Conflict Avoidance (Partitioned Writes)**
 
-```
 Prevention is better than resolution.
 Design the system so the same data is never written by two masters.
 
@@ -1074,7 +1038,6 @@ their writes still go to North Master (just takes 200ms instead of 5ms).
 
 No conflicts are possible because each record has exactly one "owning" master.
 This is the cleanest solution — avoid the problem entirely.
-```
 
 **Strategy 3: Merge / Application-Level Resolution**
 
@@ -1099,13 +1062,11 @@ Merge is ambiguous. You need a tie-breaker rule.
 
 **Strategy 4: Show the Conflict to the User**
 
-```
 Like Google Docs when it can't auto-merge:
 "We detected a conflict. Version 1: 'Rahul Kumar'. Version 2: 'Rahul Sharma'. 
 Which one do you want to keep?"
 
 This is the most correct but worst UX. Only practical for certain document types.
-```
 
 | Strategy | Idea | Pros | Cons |
 |----------|------|------|------|
@@ -1122,8 +1083,7 @@ This is the most correct but worst UX. Only practical for certain document types
 
 Even with master-slave and multi-master, there comes a point where the sheer volume of data is too large to fit on any single machine.
 
-```
-Scenario: 
+**Scenario:** 
 You store all tweets ever posted on Twitter.
 Estimated tweets since Twitter launched: ~500 billion tweets
 Average tweet size: 500 bytes (text + metadata)
@@ -1138,7 +1098,6 @@ Even if you use a 24 TB server:
 
 The data itself must be split across multiple servers.
 That's sharding.
-```
 
 ```mermaid
 flowchart TB
@@ -1193,26 +1152,24 @@ Each shard is an independent database server with its own master-slave setup. Yo
 
 This is the fundamental difference from partitioning. With partitioning (same server), PostgreSQL routes automatically. With sharding (different servers), **your application code must route queries manually**.
 
-```
 APPLICATION-LEVEL SHARD ROUTER:
 
 function getShardForTweetId(tweet_id):
-    if tweet_id <= 167_000_000_000:
-        return connect to "shard1.db.internal:5432"
-    elif tweet_id <= 333_000_000_000:
-        return connect to "shard2.db.internal:5432"
-    else:
-        return connect to "shard3.db.internal:5432"
+  if tweet_id <= 167_000_000_000:
+      return connect to "shard1.db.internal:5432"
+  elif tweet_id <= 333_000_000_000:
+      return connect to "shard2.db.internal:5432"
+  else:
+      return connect to "shard3.db.internal:5432"
 
 function writeTweet(tweet):
-    shard_id = HASH(tweet.user_id) % 3  # or range-based
-    connection = getShardConnection(shard_id)
-    connection.execute("INSERT INTO tweets VALUES (...)")
+  shard_id = HASH(tweet.user_id) % 3  # or range-based
+  connection = getShardConnection(shard_id)
+  connection.execute("INSERT INTO tweets VALUES (...)")
 
 function getTweetById(tweet_id):
-    connection = getShardForTweetId(tweet_id)
-    return connection.execute("SELECT * FROM tweets WHERE id = ?", tweet_id)
-```
+  connection = getShardForTweetId(tweet_id)
+  return connection.execute("SELECT * FROM tweets WHERE id = ?", tweet_id)
 
 This routing logic is now YOUR responsibility. Every read, every write must be routed to the correct shard. If you get it wrong, you write to shard 2 but read from shard 1 — data not found.
 
@@ -1220,13 +1177,12 @@ This routing logic is now YOUR responsibility. Every read, every write must be r
 
 **1. Range-Based Sharding**
 
-```
 SETUP:
 Shard 1: user_id 1          to 10,000,000     (10 million users)
 Shard 2: user_id 10,000,001 to 20,000,000     (10 million users)
 Shard 3: user_id 20,000,001 to 30,000,000     (10 million users)
 
-QUERY ROUTING (trivial):
+**QUERY ROUTING (trivial):**
 user_id = 7,500,000  → Shard 1 (1 to 10M)
 user_id = 15,000,000 → Shard 2 (10M to 20M)
 user_id = 25,000,000 → Shard 3 (20M to 30M)
@@ -1246,11 +1202,9 @@ This is a "hot shard" — one shard takes disproportionate load.
 
 SOLUTION: Design ranges based on activity, not just ID.
 Or use hash-based sharding instead.
-```
 
 **2. Hash-Based Sharding**
 
-```
 SETUP:
 Number of shards: 4
 Sharding formula: shard_number = HASH(user_id) % 4
@@ -1283,11 +1237,9 @@ THE SOLUTION: Consistent Hashing
  requires moving 1/n of the data, not nearly all of it.
  Used by systems like Cassandra and DynamoDB.
  Worth learning separately as a deep topic.)
-```
 
 **3. Geographic/Entity-Based Sharding**
 
-```
 SETUP:
 Shard 1: Users from India
 Shard 2: Users from USA
@@ -1297,7 +1249,7 @@ Shard 4: Rest of world
 BENEFITS:
 - Data locality: Indian users' data is in India (low latency for reads)
 - Compliance: GDPR requires European user data to stay in Europe
-              Achieved automatically with this sharding strategy
+            Achieved automatically with this sharding strategy
 - Regional isolation: An outage in US Shard doesn't affect Indian users
 
 ROUTING:
@@ -1318,7 +1270,6 @@ Also: User traveling from India to USA.
 Their data is in India Shard.
 All their requests now cross the ocean to India Shard.
 Higher latency. No easy solution without data migration.
-```
 
 **4. Directory-Based Sharding**
 
@@ -1382,7 +1333,6 @@ LIMIT 20;
 On a single database: milliseconds. 
 Database engine handles the JOIN in memory.
 
-
 SAME QUERY WITH SHARDING 
 (tweets on one shard by tweet_id, users on another shard by user_id):
 
@@ -1411,7 +1361,6 @@ PROBLEMS:
 - Network round trips: 2 (one per shard) vs 1 (single DB)
 - Total latency: potentially seconds vs milliseconds
 
-
 THE GOLDEN RULE OF SHARDING:
 Design your sharding key such that your most common queries
 stay within a single shard (no cross-shard JOINs).
@@ -1438,68 +1387,65 @@ flowchart TD
 
 ## The Full Database Scaling Decision Tree — With Context
 
-```
 START: You have a single database.
-─────────────────────────────────────────────────────────
 
 STEP 1: Slow queries on large tables?
-        ↓ YES
-        → Add INDEXES on columns used in WHERE clauses.
-          Cost: near zero. Benefit: huge (O(N) → O(log N)).
-          Always do this first, no matter what.
-          Trade-off: Writes become slightly slower.
-          
-        ↓ STILL SLOW (index file itself is large)
+      ↓ YES
+      → Add INDEXES on columns used in WHERE clauses.
+        Cost: near zero. Benefit: huge (O(N) → O(log N)).
+        Always do this first, no matter what.
+        Trade-off: Writes become slightly slower.
         
+      ↓ STILL SLOW (index file itself is large)
+      
 STEP 2: Table has hundreds of millions of rows?
-        ↓ YES  
-        → Add PARTITIONING on the table.
-          Split by range or hash. Same server.
-          PostgreSQL routes queries automatically.
-          Cost: moderate (restructure the table).
-          Benefit: smaller indexes, faster maintenance.
-          
-        ↓ STILL SLOW (server itself is the bottleneck)
+      ↓ YES  
+      → Add PARTITIONING on the table.
+        Split by range or hash. Same server.
+        PostgreSQL routes queries automatically.
+        Cost: moderate (restructure the table).
+        Benefit: smaller indexes, faster maintenance.
         
+      ↓ STILL SLOW (server itself is the bottleneck)
+      
 STEP 3: Is the server hardware the limit?
-        ↓ YES
-        → VERTICAL SCALING first. 
-          Double the RAM and CPU. Easy. No code changes.
-          Do this before any architectural changes.
-          
-        ↓ HIT THE VERTICAL CEILING (or cost is too high)
+      ↓ YES
+      → VERTICAL SCALING first. 
+        Double the RAM and CPU. Easy. No code changes.
+        Do this before any architectural changes.
         
+      ↓ HIT THE VERTICAL CEILING (or cost is too high)
+      
 STEP 4: Is traffic READ-HEAVY? (reads >> writes)
-        ↓ YES
-        → MASTER-SLAVE (Read Replicas).
-          All writes → Master.
-          All reads → distributed across N slaves.
-          Each slave can handle the same read QPS as master.
-          With 5 slaves: 5× read throughput.
-          Cost: replication lag (usually milliseconds).
-          
-        ↓ STILL NOT ENOUGH (slaves can't keep up or writes are the bottleneck)
+      ↓ YES
+      → MASTER-SLAVE (Read Replicas).
+        All writes → Master.
+        All reads → distributed across N slaves.
+        Each slave can handle the same read QPS as master.
+        With 5 slaves: 5× read throughput.
+        Cost: replication lag (usually milliseconds).
         
+      ↓ STILL NOT ENOUGH (slaves can't keep up or writes are the bottleneck)
+      
 STEP 5: Is write traffic globally distributed?
-        ↓ YES (users in multiple regions writing)
-        → MULTI-MASTER setup.
-          One master per region.
-          Writes are local (low latency).
-          Masters sync periodically.
-          Hard part: conflict resolution strategy.
-          
-        ↓ Data volume is the problem (doesn't fit on one machine)
+      ↓ YES (users in multiple regions writing)
+      → MULTI-MASTER setup.
+        One master per region.
+        Writes are local (low latency).
+        Masters sync periodically.
+        Hard part: conflict resolution strategy.
         
+      ↓ Data volume is the problem (doesn't fit on one machine)
+      
 STEP 6: Does the total data exceed one machine's storage/RAM?
-        ↓ YES
-        → SHARDING.
-          Split data across multiple machines.
-          Choose sharding key carefully.
-          You handle routing in application code.
-          Avoid cross-shard JOINs.
-          Consider consistent hashing for future shard additions.
-          Last resort — adds enormous complexity.
-```
+      ↓ YES
+      → SHARDING.
+        Split data across multiple machines.
+        Choose sharding key carefully.
+        You handle routing in application code.
+        Avoid cross-shard JOINs.
+        Consider consistent hashing for future shard additions.
+        Last resort — adds enormous complexity.
 
 The most important lesson: **never skip steps**. Companies that jump straight to sharding when indexing would have solved their problem end up with a massively complex system that's hard to maintain, expensive to operate, and prone to bugs — all for no real benefit.
 
