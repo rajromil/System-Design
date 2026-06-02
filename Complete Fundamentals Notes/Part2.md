@@ -316,9 +316,9 @@ Algorithm 2: Least Connections (Least Busy)
 Load balancer constantly monitors how many 
 active connections each server has:
 
-Server 1: 45 active connections
-Server 2: 12 active connections   ← least busy
-Server 3: 38 active connections
+- Server 1: 45 active connections
+- Server 2: 12 active connections   ← least busy
+- Server 3: 38 active connections
 
 Next incoming request → Server 2 (least busy)
 
@@ -335,9 +335,9 @@ Useful when you NEED session stickiness.
 Algorithm 4: Weighted Round Robin
 If your servers have different capacities:
 
-Server 1: 8 cores  → weight 4  (gets 4 out of every 7 requests)
-Server 2: 4 cores  → weight 2  (gets 2 out of every 7 requests)
-Server 3: 2 cores  → weight 1  (gets 1 out of every 7 requests)
+- Server 1: 8 cores  → weight 4  (gets 4 out of every 7 requests)
+- Server 2: 4 cores  → weight 2  (gets 2 out of every 7 requests)
+- Server 3: 2 cores  → weight 1  (gets 1 out of every 7 requests)
 
 **The Load Balancer Also Does Health Checks:**
 
@@ -437,14 +437,14 @@ You define rules (called **scaling policies**) and the system automatically adds
 
 AUTO SCALING CONFIGURATION:
 
-Minimum instances: 2   ← never go below 2 (for redundancy)
-Maximum instances: 20  ← never go above 20 (cost cap)
-Desired instances: 2   ← start with 2
+- Minimum instances: 2   ← never go below 2 (for redundancy)
+- Maximum instances: 20  ← never go above 20 (cost cap)
+- Desired instances: 2   ← start with 2
 
-Scale-OUT trigger: 
-  "If AVERAGE CPU across all instances > 70% 
-  for 3 consecutive minutes,
-  ADD 2 new instances"
+**Scale-OUT trigger:**
+- "If AVERAGE CPU across all instances > 70%
+- for 3 consecutive minutes,
+- ADD 2 new instances"
 
 Scale-IN trigger:
   "If AVERAGE CPU across all instances < 30%
@@ -476,9 +476,9 @@ Now let's trace through what happens in real life:
   Average CPU: 72%  ← exceeded 70% threshold!
   Auto Scaler: "Threshold exceeded! Launch 2 new instances."
 
-9:16 AM:
-  Running instances: 4  (2 new ones launching — takes ~2 minutes)
-  Average CPU: 72% on old instances (new ones not ready yet)
+**9:16 AM:**
+- Running instances: 4  (2 new ones launching — takes ~2 minutes)
+- Average CPU: 72% on old instances (new ones not ready yet)
 
 9:18 AM: New instances are ready and attached to load balancer.
   Running instances: 4
@@ -490,10 +490,10 @@ Now let's trace through what happens in real life:
   Average CPU: 75%  ← threshold exceeded again!
   Auto Scaler: "Launch 2 more instances."
 
-9:32 AM:
-  Running instances: 6
-  Average CPU: 50%
-  Status: Comfortable
+**9:32 AM:**
+- Running instances: 6
+- Average CPU: 50%
+- Status: Comfortable
 
 [Peak holds from 9 AM to 11 AM with 6-8 instances]
 
@@ -503,10 +503,10 @@ Now let's trace through what happens in real life:
   Auto Scaler: "Low CPU for 10 minutes. Removing 1 instance."
   (we scale in slowly — 1 at a time, not all at once)
 
-12:10 PM:
-  Running instances: 7
-  Average CPU: 14%  ← still low
-  Auto Scaler: "Remove 1 more."
+**12:10 PM:**
+- Running instances: 7
+- Average CPU: 14%  ← still low
+- Auto Scaler: "Remove 1 more."
 
 [...continues gradually scaling in over the next 40 minutes...]
 
@@ -549,11 +549,11 @@ You use tools like Apache JMeter, k6, or AWS Load Testing to simulate realistic 
 
 Load Test Results for your server:
 
-100 virtual users  → CPU: 12%, Response: 45ms,  Errors: 0%   → Comfortable
-500 virtual users  → CPU: 35%, Response: 78ms,  Errors: 0%   → Fine
-1000 virtual users → CPU: 68%, Response: 150ms, Errors: 0%   → Acceptable
-1500 virtual users → CPU: 82%, Response: 800ms, Errors: 1.2% → Degrading
-2000 virtual users → CPU: 95%, Response: 4000ms,Errors: 15%  → BREAKING
+- 100 virtual users  → CPU: 12%, Response: 45ms,  Errors: 0%   → Comfortable
+- 500 virtual users  → CPU: 35%, Response: 78ms,  Errors: 0%   → Fine
+- 1000 virtual users → CPU: 68%, Response: 150ms, Errors: 0%   → Acceptable
+- 1500 virtual users → CPU: 82%, Response: 800ms, Errors: 1.2% → Degrading
+- 2000 virtual users → CPU: 95%, Response: 4000ms,Errors: 15%  → BREAKING
 
 Conclusion: Your server starts degrading meaningfully around CPU 70-75%.
 Set your auto scaling trigger at 70% CPU.

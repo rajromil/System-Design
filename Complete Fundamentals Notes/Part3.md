@@ -230,9 +230,9 @@ Mumbai Node can't reach Hyderabad and Bihar. But you know what?
 Mumbai Node says: "Fine, I'll write locally. I'll sync later."
 Mumbai confirms to User A: "Write successful! age = 22."
 
-Mumbai still has: age = 22
-Hyderabad still has: age = 21  (doesn't know about the write)
-Bihar still has: age = 21      (doesn't know about the write)
+- Mumbai still has: age = 22
+- Hyderabad still has: age = 21  (doesn't know about the write)
+- Bihar still has: age = 21      (doesn't know about the write)
 
 Hyderabad receives User B's read.
 Hyderabad says: "I'll respond with what I have."
@@ -429,9 +429,9 @@ Read row 3: id=3? No.
 Read row 7,432,890: id=7,432,890? No.
 Read row 7,432,891: id=7,432,891? YES! Found it.
 
-Total rows checked: 7,432,891
-Time: proportional to N (number of rows)
-At 50 million rows, worst case: check all 50 million rows.
+- Total rows checked: 7,432,891
+- Time: proportional to N (number of rows)
+- At 50 million rows, worst case: check all 50 million rows.
 
 If this query runs 10,000 times per second (10,000 users loading their profiles), you're doing 500 billion row comparisons per second. Your database melts.
 
@@ -877,13 +877,13 @@ Automatic failover process:
    (which has applied the most recent binary log entries)
    → Slave 1 is most up-to-date
 
-2. Promote Slave 1 to be the new Master:
-   - Slave 1 starts accepting writes
-   - Slave 1 starts generating its own binary log
+**2. Promote Slave 1 to be the new Master:**
+- Slave 1 starts accepting writes
+- Slave 1 starts generating its own binary log
 
-3. Redirect Slaves 2 and 3 to replicate from the new Master:
-   - Slave 2: "I'll now receive binary log from Slave 1 (new master)"
-   - Slave 3: "I'll now receive binary log from Slave 1 (new master)"
+**3. Redirect Slaves 2 and 3 to replicate from the new Master:**
+- Slave 2: "I'll now receive binary log from Slave 1 (new master)"
+- Slave 3: "I'll now receive binary log from Slave 1 (new master)"
 
 4. Update the application's connection string to point to new Master.
 
@@ -1336,9 +1336,9 @@ Database engine handles the JOIN in memory.
 SAME QUERY WITH SHARDING 
 (tweets on one shard by tweet_id, users on another shard by user_id):
 
-Step 1: Application queries Tweet Shard:
-        "Get all tweets created after 2024-01-01"
-        → Returns 1 million tweet records with user_ids
+**Step 1: Application queries Tweet Shard:**
+1. "Get all tweets created after 2024-01-01"
+→ Returns 1 million tweet records with user_ids
 
 Step 2: Application queries User Shard:
         "Get all users whose IDs appear in those 1 million tweets"

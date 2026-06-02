@@ -134,9 +134,9 @@ A transaction either completes entirely or doesn't happen at all. There is no pa
 
 **Scenario:** Rahul transfers ₹5,000 to Shivam.
 
-This involves TWO database operations:
-  Operation 1: Deduct ₹5,000 from Rahul's account
-  Operation 2: Add ₹5,000 to Shivam's account
+**This involves TWO database operations:**
+- Operation 1: Deduct ₹5,000 from Rahul's account
+- Operation 2: Add ₹5,000 to Shivam's account
 
 What if Operation 1 succeeds but Operation 2 fails?
   → Rahul loses ₹5,000. Shivam gets nothing. Money disappears.
@@ -536,18 +536,18 @@ Bank accounts:
   The schema is clear. It won't change unexpectedly.
   Use SQL (PostgreSQL/MySQL).
 
-Customer records in e-commerce:
-  Every customer always has: name, email, address, phone
-  Use SQL.
+**Customer records in e-commerce:**
+- Every customer always has: name, email, address, phone
+- Use SQL.
 
 UNSTRUCTURED / FLEXIBLE SCHEMA → NoSQL
 
-Product catalog on Amazon:
-  A book has: ISBN, author, page_count, publisher
-  A shoe has: size, color, material, gender
-  An electronic has: processor, battery, display_resolution
-  Different product categories have completely different attributes.
-  Use MongoDB (Document DB) — each product document has its own fields.
+**Product catalog on Amazon:**
+- A book has: ISBN, author, page_count, publisher
+- A shoe has: size, color, material, gender
+- An electronic has: processor, battery, display_resolution
+- Different product categories have completely different attributes.
+- Use MongoDB (Document DB) — each product document has its own fields.
 
 User activity logs:
   Some logs have location, some don't.
@@ -561,19 +561,19 @@ User activity logs:
 ```
 YES — Data integrity is non-negotiable → SQL
 
-Financial transactions (banking, payments, stock trading):
-  "Deduct from account A AND add to account B" must be atomic.
-  You CANNOT have money disappear in the middle of a transfer.
-  PostgreSQL with transactions is the right choice.
+**Financial transactions (banking, payments, stock trading):**
+- "Deduct from account A AND add to account B" must be atomic.
+- You CANNOT have money disappear in the middle of a transfer.
+- PostgreSQL with transactions is the right choice.
 
-Order and inventory management:
-  "Reserve stock AND create order" must be atomic.
-  If creating the order fails, stock must be unreserved.
-  Use SQL.
+**Order and inventory management:**
+- "Reserve stock AND create order" must be atomic.
+- If creating the order fails, stock must be unreserved.
+- Use SQL.
 
-Medical records:
-  Partial writes to a patient record could be life-threatening.
-  Use SQL.
+**Medical records:**
+- Partial writes to a patient record could be life-threatening.
+- Use SQL.
 
 NO — Eventual consistency is acceptable → NoSQL is viable
 
@@ -600,11 +600,11 @@ NoSQL would require you to pre-compute all possible views — impractical.
 
 WRITE-HEAVY with simple reads (time-series, logging) → Cassandra / DynamoDB
 
-GPS location of 500,000 delivery drivers updating every 5 seconds:
-  2.5 million writes per second
-  Read pattern: "Where is driver_X right now?" — simple key lookup
-  Cassandra or DynamoDB handles this natively.
-  PostgreSQL would melt under 2.5 million writes/sec.
+**GPS location of 500,000 delivery drivers updating every 5 seconds:**
+- 2.5 million writes per second
+- Read pattern: "Where is driver_X right now?" — simple key lookup
+- Cassandra or DynamoDB handles this natively.
+- PostgreSQL would melt under 2.5 million writes/sec.
 
 CACHING, SESSION, RATE LIMITING → Redis
 
@@ -635,30 +635,30 @@ flowchart TB
 ```
 Flipkart's hypothetical architecture:
 
-PostgreSQL (SQL):
-  - users table (account info, addresses)
-  - orders table (order history, payments)
-  - inventory table (stock levels)
-  - financial_transactions table
-  Reason: ACID critical, structured schema, JOINs needed.
+**PostgreSQL (SQL):**
+- users table (account info, addresses)
+- orders table (order history, payments)
+- inventory table (stock levels)
+- financial_transactions table
+- Reason: ACID critical, structured schema, JOINs needed.
 
-MongoDB (NoSQL - Document):
-  - products collection (flexible schema per category)
-  - reviews collection (unstructured review data, ratings, photos)
-  Reason: Product attributes vary wildly per category.
+**MongoDB (NoSQL - Document):**
+- products collection (flexible schema per category)
+- reviews collection (unstructured review data, ratings, photos)
+- Reason: Product attributes vary wildly per category.
 
-Redis (NoSQL - Key-Value):
-  - Session store (user login sessions)
-  - Cart data (temporary, in-memory while browsing)
-  - Product page cache (expensive queries cached for 10 min)
-  - OTP storage (with auto-expiry TTL)
-  - Rate limiting (requests per IP per minute)
-  Reason: Sub-millisecond access needed.
+**Redis (NoSQL - Key-Value):**
+- Session store (user login sessions)
+- Cart data (temporary, in-memory while browsing)
+- Product page cache (expensive queries cached for 10 min)
+- OTP storage (with auto-expiry TTL)
+- Rate limiting (requests per IP per minute)
+- Reason: Sub-millisecond access needed.
 
-Cassandra (NoSQL - Column-family):
-  - User activity logs (every click, page view, search)
-  - Delivery tracking events (location updates every 5 seconds)
-  Reason: Massive write volume, simple key-based reads.
+**Cassandra (NoSQL - Column-family):**
+- User activity logs (every click, page view, search)
+- Delivery tracking events (location updates every 5 seconds)
+- Reason: Massive write volume, simple key-based reads.
 
 Neo4j (Graph):
   - "Customers who bought this also bought" graph
@@ -759,10 +759,10 @@ Timeline of a typical monolith failure:
     Users can't pay.            ← Not the recommendation feature's fault
     EVERYTHING IS DOWN because one module has a bug.
 
-Recovery:
-  Rollback the entire deployment.
-  All features are down during rollback (5-15 minutes).
-  Revenue lost: enormous.
+**Recovery:**
+- Rollback the entire deployment.
+- All features are down during rollback (5-15 minutes).
+- Revenue lost: enormous.
 
 **Problem 3: Tech stack is locked in**
 
@@ -870,12 +870,12 @@ flowchart TB
 
 DIWALI SALE TRAFFIC:
 
-User Service:     5x traffic needed  → Run 2 instances
-Product Service:  100x traffic needed → Run 80 instances ← Only this scales big
-Order Service:    20x traffic needed  → Run 16 instances
-Payment Service:  20x traffic needed  → Run 16 instances
-Notification:     30x traffic needed  → Run 24 instances
-Recommendation:   80x traffic needed  → Run 64 instances
+- User Service:     5x traffic needed  → Run 2 instances
+- Product Service:  100x traffic needed → Run 80 instances ← Only this scales big
+- Order Service:    20x traffic needed  → Run 16 instances
+- Payment Service:  20x traffic needed  → Run 16 instances
+- Notification:     30x traffic needed  → Run 24 instances
+- Recommendation:   80x traffic needed  → Run 64 instances
 
 VS MONOLITH:
 You'd need to run 80 instances of EVERYTHING
@@ -915,11 +915,11 @@ Monolith:      Pay for the maximum any single module needs, applied to ALL.
 
 **WITHOUT API GATEWAY:**
 
-Mobile App must know:
-  User Service:           http://192.168.24.32:3001
-  Product Service:        http://192.168.24.38:3002
-  Order Service:          http://192.168.24.45:3003
-  ...
+**Mobile App must know:**
+- User Service:           http://192.168.24.32:3001
+- Product Service:        http://192.168.24.38:3002
+- Order Service:          http://192.168.24.45:3003
+- ...
 
 PROBLEMS:
 1. Hardcoded IPs — new deployment = new app release
@@ -998,10 +998,10 @@ EARLY-STAGE STARTUP:
 Team size: 2-3 developers
 Traffic: Hundreds of users
 
-Microservices overhead before business logic:
-  - 6 repos, 6 CI/CD pipelines, 6 databases
-  - API Gateway, service discovery, distributed tracing
-  - Weeks of infrastructure work
+**Microservices overhead before business logic:**
+- 6 repos, 6 CI/CD pipelines, 6 databases
+- API Gateway, service discovery, distributed tracing
+- Weeks of infrastructure work
 
 Benefit at this stage: Near zero. Start monolith. Ship fast.
 
@@ -1080,9 +1080,9 @@ Server-2 and Server-3 are mostly idle.
 
 Each server has a **weight**. Weight 3 gets 3× the traffic of weight 1.
 
-Server-1: weight = 1  (2 cores)
-Server-2: weight = 1  (2 cores)
-Server-3: weight = 3  (6 cores, 16 GB)
+- Server-1: weight = 1  (2 cores)
+- Server-2: weight = 1  (2 cores)
+- Server-3: weight = 3  (6 cores, 16 GB)
 
 Cycle of 5 requests: S1, S2, S3, S3, S3 → repeat
 
@@ -1105,9 +1105,9 @@ Weights are **static**. If Server-3 runs a background job and effective capacity
 
 Route each new request to the server with the **fewest active connections**.
 
-Server-1: 45 active connections
-Server-2: 12 active connections   ← next request here
-Server-3: 38 active connections
+- Server-1: 45 active connections
+- Server-2: 12 active connections   ← next request here
+- Server-3: 38 active connections
 
 After routing: Server-2 has 13 connections.
 

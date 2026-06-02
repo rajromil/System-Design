@@ -180,9 +180,9 @@ Long TTL (hours to days):
   Good for: Static content, configuration, rarely-changing master data
   Trade-off: Stale data risk increases; need active invalidation for updates
 
-No TTL (infinite):
-  Good for: Truly static data (country list, currency codes)
-  Trade-off: Must invalidate manually when data changes
+**No TTL (infinite):**
+- Good for: Truly static data (country list, currency codes)
+- Trade-off: Must invalidate manually when data changes
 
 ### Strategy 2: Active Invalidation on Write — Delete or Update Cache When Data Changes
 
@@ -238,10 +238,10 @@ Server does TWO writes simultaneously:
   Write 1: UPDATE leaderboard in PostgreSQL database
   Write 2: SET leaderboard:live <new_ranking_data> in Redis
 
-When 100,000 users refresh the leaderboard:
-  → All served from Redis
-  → Redis always has the most current data
-  → Database write happened, Redis write happened at the same time
+**When 100,000 users refresh the leaderboard:**
+→ All served from Redis
+→ Redis always has the most current data
+→ Database write happened, Redis write happened at the same time
 
 This is write-through caching.
 
@@ -319,10 +319,10 @@ Cache-Control: no-store            ← Never cache (sensitive data like banking 
 Cache-Control: private             ← Cache only in browser, not in intermediate proxies
 Cache-Control: public              ← Can be cached by browser AND CDNs
 
-ETag: "abc123"                     ← A fingerprint of the content.
-                                  Browser sends: "If-None-Match: abc123"
-                                  Server: "Content hasn't changed → 304 Not Modified"
-                                  Browser: Uses cached version. No download needed.
+- ETag: "abc123"                     ← A fingerprint of the content.
+- Browser sends: "If-None-Match: abc123"
+- Server: "Content hasn't changed → 304 Not Modified"
+- Browser: Uses cached version. No download needed.
 
 **Why static assets use content hashes in their filenames:**
 
@@ -351,29 +351,29 @@ A CDN is a globally distributed network of servers (called "edge servers" or "Po
 **WITHOUT CDN:**
 User in Chennai wants to watch a video hosted on servers in Mumbai.
 
-Journey: Chennai user → Internet → Mumbai Data Center → back to Chennai
-Physical distance: ~1300 km one way
-Speed of light in fiber: ~200,000 km/s
-Round trip time just from physics: ~13ms minimum
-With network overhead: ~60-100ms per request
+- Journey: Chennai user → Internet → Mumbai Data Center → back to Chennai
+- Physical distance: ~1300 km one way
+- Speed of light in fiber: ~200,000 km/s
+- Round trip time just from physics: ~13ms minimum
+- With network overhead: ~60-100ms per request
 
-For a 100 MB video:
-  Entire file travels 1300 km from Mumbai
-  If Mumbai is under load (lots of users): slowdowns, buffering
+**For a 100 MB video:**
+- Entire file travels 1300 km from Mumbai
+- If Mumbai is under load (lots of users): slowdowns, buffering
 
 **WITH CDN:**
 User in Chennai wants to watch the same video.
 
-First user from Chennai to watch this video:
-  CDN edge server in Chennai: "I don't have this video cached."
-  Edge server fetches from origin (Mumbai): one time trip.
-  Edge server caches the video locally in Chennai.
+**First user from Chennai to watch this video:**
+1. CDN edge server in Chennai: "I don't have this video cached."
+2. Edge server fetches from origin (Mumbai): one time trip.
+3. Edge server caches the video locally in Chennai.
 
-ALL subsequent users in Chennai:
-  CDN edge server in Chennai: "I have this video! Serving locally."
-  Distance: a few km within Chennai.
-  Latency: < 5ms
-  Speed: Full bandwidth, no Mumbai involved at all.
+**ALL subsequent users in Chennai:**
+- CDN edge server in Chennai: "I have this video! Serving locally."
+- Distance: a few km within Chennai.
+- Latency: < 5ms
+- Speed: Full bandwidth, no Mumbai involved at all.
 
 GLOBAL SCALE:
 Flipkart serves product images from 50+ CDN PoPs worldwide.
@@ -384,20 +384,20 @@ doesn't have the content yet.
 
 **What gets cached at CDN vs what doesn't:**
 
-CACHE AT CDN (static content that doesn't change per user):
-  - Images (product photos, logos, banners)
-  - Videos
-  - CSS, JavaScript bundles
-  - Fonts
-  - Static HTML pages
-  - PDF files, downloadable content
+**CACHE AT CDN (static content that doesn't change per user):**
+- Images (product photos, logos, banners)
+- Videos
+- CSS, JavaScript bundles
+- Fonts
+- Static HTML pages
+- PDF files, downloadable content
 
-DO NOT CACHE AT CDN (dynamic content specific to a user):
-  - User's dashboard ("Hello, Rahul! Your orders: ...")
-  - Shopping cart contents
-  - Authentication tokens or session data
-  - Payment pages
-  - Any page showing personalized data
+**DO NOT CACHE AT CDN (dynamic content specific to a user):**
+- User's dashboard ("Hello, Rahul! Your orders: ...")
+- Shopping cart contents
+- Authentication tokens or session data
+- Payment pages
+- Any page showing personalized data
 
 ### 4. Application-Level Cache
 
@@ -426,18 +426,18 @@ async function getExpensiveComputationResult(input) {
 
 **Difference between application cache and Redis:**
 
-Application-Level Cache (in-process Map/Dict):
-  + Absolute fastest — no network call, just memory lookup
-  - Lost when server restarts
-  - NOT shared across multiple server instances
-  + Good for: Config values, compiled regex patterns
+**Application-Level Cache (in-process Map/Dict):**
++ Absolute fastest — no network call, just memory lookup
+- Lost when server restarts
+- NOT shared across multiple server instances
++ Good for: Config values, compiled regex patterns
 
-Redis (out-of-process):
-  + Shared across all server instances
-  + Survives server restarts (with persistence)
-  + Has TTL support, rich data types, pub/sub
-  - Requires a network call (still very fast: 1-5ms)
-  + Good for: Session data, shared computed results
+**Redis (out-of-process):**
++ Shared across all server instances
++ Survives server restarts (with persistence)
++ Has TTL support, rich data types, pub/sub
+- Requires a network call (still very fast: 1-5ms)
++ Good for: Session data, shared computed results
 
 ---
 
@@ -457,23 +457,23 @@ HDD (Hard Disk Drive):
 SSD (Solid State Drive):
   Random access: ~0.1ms
 
-RAM (Random Access Memory):
-  Latency: ~60 nanoseconds (0.00006ms)
-  Typical Redis lookup latency: ~0.1-1ms (includes network)
+**RAM (Random Access Memory):**
+- Latency: ~60 nanoseconds (0.00006ms)
+- Typical Redis lookup latency: ~0.1-1ms (includes network)
 
 Redis can handle 100,000 to 1,000,000 operations/sec on one instance.
 
 **Why not use Redis for EVERYTHING if it's so fast?**
 
-RAM:
-  Speed: Blazing fast
-  Cost: Expensive
-  Volatility: Loses data on power loss by default
+**RAM:**
+- Speed: Blazing fast
+- Cost: Expensive
+- Volatility: Loses data on power loss by default
 
-SSD/Disk:
-  Speed: Slower
-  Cost: Much cheaper
-  Persistence: Survives power cuts
+**SSD/Disk:**
+- Speed: Slower
+- Cost: Much cheaper
+- Persistence: Survives power cuts
 
 So we cache only hot data in Redis.
 80/20 rule: 80% of requests often hit 20% of data.
@@ -484,15 +484,15 @@ Redis keys are strings, but conventions matter.
 
 Use colon-separated namespaces:
 
-user:1
-user:1:email
-user:1:session
-product:456
-product:456:stock
-leaderboard:game:xyz
-rate:ip:192.168.1.1
-cache:blogs:page:1
-otp:phone:9876543210
+- user:1
+- user:1:email
+- user:1:session
+- product:456
+- product:456:stock
+- leaderboard:game:xyz
+- rate:ip:192.168.1.1
+- cache:blogs:page:1
+- otp:phone:9876543210
 
 Pattern scanning:
 SCAN 0 MATCH "user:*"
@@ -543,11 +543,11 @@ Use cases:
 
 ### Data Type 3: Hashes
 
-HSET user:1 name "Shivam" age 21 city "Delhi" email "shivam@gmail.com"
-HGET user:1 name
-HGETALL user:1
-HMGET user:1 name email
-HDEL user:1 city
+- HSET user:1 name "Shivam" age 21 city "Delhi" email "shivam@gmail.com"
+- HGET user:1 name
+- HGETALL user:1
+- HMGET user:1 name email
+- HDEL user:1 city
 
 Use cases:
 - User profiles
@@ -731,9 +731,9 @@ Redis Cluster uses 16384 hash slots.
 
 HASH_SLOT = CRC16(key) % 16384
 
-Node 1: slots 0-5460
-Node 2: slots 5461-10922
-Node 3: slots 10923-16383
+- Node 1: slots 0-5460
+- Node 2: slots 5461-10922
+- Node 3: slots 10923-16383
 
 Clients route keys directly by slot.
 Replicas provide failover.

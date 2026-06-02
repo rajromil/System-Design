@@ -28,11 +28,11 @@ A database like PostgreSQL stores data in a highly structured way. Every row is 
 
 Now consider a video file.
 
-A typical MP4 video:
-  Duration:     10 minutes
-  Resolution:   1080p
-  File size:    ~1.5 GB
-  Binary size:  ~12,884,901,888 bits
+**A typical MP4 video:**
+- Duration:     10 minutes
+- Resolution:   1080p
+- File size:    ~1.5 GB
+- Binary size:  ~12,884,901,888 bits
 
 Trying to store this as a database column:
   CREATE TABLE videos (
@@ -188,11 +188,11 @@ Same pattern works for **downloads** — pre-signed GET URL, user downloads dire
 | **S3 Glacier** | ~$0.004 | Hours | Archives, compliance |
 | **S3 Glacier Deep Archive** | ~$0.00099 | 12–48 hours | Long-term cold storage |
 
-Lifecycle example:
-  Day 0-30:    S3 Standard
-  Day 31-90:   S3 Standard-IA
-  Day 91-365:  S3 Glacier
-  Day 366+:    Glacier Deep Archive
+**Lifecycle example:**
+- Day 0-30:    S3 Standard
+- Day 31-90:   S3 Standard-IA
+- Day 91-365:  S3 Glacier
+- Day 366+:    Glacier Deep Archive
 
 Pay full price only for recent/popular content.
 Archive old content at minimum cost.
@@ -205,10 +205,10 @@ Archive old content at minimum cost.
 
 Signals in fiber move at roughly 200,000 km/s. Physics sets a floor on latency.
 
-Mumbai to New York:
-  Distance: ~12,000 km
-  Minimum one-way: ~60ms
-  Real round trip: 180-250ms with routing overhead
+**Mumbai to New York:**
+- Distance: ~12,000 km
+- Minimum one-way: ~60ms
+- Real round trip: 180-250ms with routing overhead
 
 User in New York, origin in Mumbai — loading 15 assets:
   ~3+ seconds from latency alone (before server processing)
@@ -249,18 +249,18 @@ Each user hits the geographically closest edge server.
 
 ## TTL Strategy — Balancing Freshness vs Performance
 
-STATIC ASSETS (content hash in filename):
-  main.a3f8b2c1.js
-  Cache-Control: public, max-age=31536000, immutable
-  New deploy = new filename = automatic cache bust
+**STATIC ASSETS (content hash in filename):**
+- main.a3f8b2c1.js
+- Cache-Control: public, max-age=31536000, immutable
+- New deploy = new filename = automatic cache bust
 
-PRODUCT IMAGES:
-  Cache-Control: public, max-age=86400  (24 hours)
-  Or ?v=2 query string for immediate bust
+**PRODUCT IMAGES:**
+- Cache-Control: public, max-age=86400  (24 hours)
+- Or ?v=2 query string for immediate bust
 
-USER-GENERATED / SENSITIVE:
-  Cache-Control: private, max-age=3600
-  Or no-store / pre-signed URLs
+**USER-GENERATED / SENSITIVE:**
+- Cache-Control: private, max-age=3600
+- Or no-store / pre-signed URLs
 
 DYNAMIC / PERSONALIZED:
   Cache-Control: no-store or no-cache
@@ -309,9 +309,9 @@ COMPLETE ARCHITECTURE:
 - Users access via CDN domain only (www.example.com/images)
 - S3 URL is never exposed publicly
 
-Flow:
-  First user in region → edge fetches from S3, caches
-  Next users in region → served from edge, S3 untouched
+**Flow:**
+1. First user in region → edge fetches from S3, caches
+2. Next users in region → served from edge, S3 untouched
 
 ---
 
@@ -341,26 +341,26 @@ Email sending does **not** need to block the response. If email service is down,
 
 ## The Spectrum of Asynchronous Tasks
 
-MUST BE SYNCHRONOUS (user waits):
-  - Validating user input
-  - Checking stock
-  - Processing payment
-  - Creating order record
-  - Returning confirmation
+**MUST BE SYNCHRONOUS (user waits):**
+- Validating user input
+- Checking stock
+- Processing payment
+- Creating order record
+- Returning confirmation
 
-CAN BE ASYNCHRONOUS (background):
-  - Confirmation email / SMS
-  - Recommendation model update
-  - Invoice PDF generation
-  - Warehouse notification
-  - Analytics writes
+**CAN BE ASYNCHRONOUS (background):**
+- Confirmation email / SMS
+- Recommendation model update
+- Invoice PDF generation
+- Warehouse notification
+- Analytics writes
 
-MUST BE ASYNCHRONOUS (too long synchronously):
-  - Video transcoding (30+ minutes)
-  - Large report generation
-  - ML training
-  - Bulk email (100k recipients)
-  - Large file parsing/indexing
+**MUST BE ASYNCHRONOUS (too long synchronously):**
+- Video transcoding (30+ minutes)
+- Large report generation
+- ML training
+- Bulk email (100k recipients)
+- Large file parsing/indexing
 
 **Key question:** *Does the user need this result before they can continue?* If no → async candidate.
 
@@ -441,15 +441,15 @@ Scale: add more consumers → queue drains faster
 
 ### Why Queues Fail for Multiple Consumer Types
 
-Video uploaded — naive approach writes to 4 separate queues:
-  Transcoder queue
-  Caption queue
-  Thumbnail queue
-  Search index queue
+**Video uploaded — naive approach writes to 4 separate queues:**
+- Transcoder queue
+- Caption queue
+- Thumbnail queue
+- Search index queue
 
-Crash after writing to queue 1 only:
-  Video transcoded
-  No captions, thumbnails, or search index
+**Crash after writing to queue 1 only:**
+- Video transcoded
+- No captions, thumbnails, or search index
 
 Can't atomically write to 4 queues in one operation.
 
@@ -461,9 +461,9 @@ Can't atomically write to 4 queues in one operation.
 Topic: "video-uploads"
 Offsets: [0, 1, 2, 3, 4]
 
-Consumer Group A (Transcoder):     offset 3
-Consumer Group B (Captions):       offset 1  (slower)
-Consumer Group C (Thumbnails):   offset 4  (faster)
+- Consumer Group A (Transcoder):     offset 3
+- Consumer Group B (Captions):       offset 1  (slower)
+- Consumer Group C (Thumbnails):   offset 4  (faster)
 
 Each group has its own offset pointer.
 All read the same messages independently.
@@ -491,9 +491,9 @@ Caption service crash? Others unaffected. Catches up from its offset.
 
 Not primarily "in-memory" — Kafka writes to DISK sequentially.
 
-Sequential append-only log:
-  HDD: ~250 MB/s sequential vs ~100 random IOPS
-  SSD: even faster
+**Sequential append-only log:**
+- HDD: ~250 MB/s sequential vs ~100 random IOPS
+- SSD: even faster
 
 Zero-copy (sendfile):
   Disk → network socket without copying through app memory

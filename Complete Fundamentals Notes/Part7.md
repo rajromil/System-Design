@@ -80,21 +80,21 @@ A **topic** is a named channel. Producers write to topics. Consumers read from t
 ```
 Ride-sharing app topics:
 
-Topic: "driver-location-updates"
-  Producer: Driver mobile app via backend
-  Consumers: Real-time map, ETA calculator
+- Topic: "driver-location-updates"
+- Producer: Driver mobile app via backend
+- Consumers: Real-time map, ETA calculator
 
-Topic: "ride-requests"
-  Producer: User app
-  Consumer: Ride matching service
+- Topic: "ride-requests"
+- Producer: User app
+- Consumer: Ride matching service
 
-Topic: "payment-events"
-  Producer: Payment service
-  Consumers: Finance reporting, fraud detection, notifications
+- Topic: "payment-events"
+- Producer: Payment service
+- Consumers: Finance reporting, fraud detection, notifications
 
-Topic: "driver-trip-completed"
-  Producer: Driver app
-  Consumers: Payment service, rating service
+- Topic: "driver-trip-completed"
+- Producer: Driver app
+- Consumers: Payment service, rating service
 
 Example message in "driver-location-updates":
 {
@@ -116,13 +116,13 @@ SCENARIO:
   500,000 active drivers
   Each sends GPS update every 2 seconds
 
-WRITES PER SECOND:
-  500,000 / 2 = 250,000 writes/sec
-  Per hour: 900 million writes
+**WRITES PER SECOND:**
+- 500,000 / 2 = 250,000 writes/sec
+- Per hour: 900 million writes
 
-POSTGRESQL DIRECTLY:
-  Strong server: ~10,000–50,000 writes/sec max
-  Required: 250,000/sec → saturated and crashing
+**POSTGRESQL DIRECTLY:**
+- Strong server: ~10,000–50,000 writes/sec max
+- Required: 250,000/sec → saturated and crashing
 
 Each PG write: disk I/O, index update, WAL, replication
 
@@ -142,15 +142,15 @@ Consumer (PostgreSQL path): batch every 10 minutes
   10 min × 250,000/sec × 60 = 150 million points
   But you only need LATEST location per driver
 
-Consumer logic:
-  1. Read 10 minutes of Kafka messages
-  2. Per driver, keep only most recent location
-  3. UPSERT ~500,000 rows into PostgreSQL
-  4. ~833 writes/sec to PG — completely fine
+**Consumer logic:**
+1. Read 10 minutes of Kafka messages
+2. Per driver, keep only most recent location
+3. UPSERT ~500,000 rows into PostgreSQL
+4. ~833 writes/sec to PG — completely fine
 
-REFINED real-time map approach:
-  Hot path:  Kafka → Consumer → Redis (sub-ms, live map)
-  Cold path: Kafka → Consumer batch → PostgreSQL (history, analytics)
+**REFINED real-time map approach:**
+- Hot path:  Kafka → Consumer → Redis (sub-ms, live map)
+- Cold path: Kafka → Consumer batch → PostgreSQL (history, analytics)
 
   Map reads Redis. Analytics reads PostgreSQL.
   Same Kafka stream. Two consumer groups. One write.
@@ -196,9 +196,9 @@ STRATEGY 1: Round Robin (no message key)
 STRATEGY 2: Key-Based Partitioning (recommended for entity ordering)
   partition = HASH(message_key) % num_partitions
 
-  Key = driver_id:
-  HASH("drv_001") % 4 = 0 → ALL drv_001 updates → Partition 0
-  HASH("drv_002") % 4 = 1 → ALL drv_002 updates → Partition 1
+**Key = driver_id:**
+- HASH("drv_001") % 4 = 0 → ALL drv_001 updates → Partition 0
+- HASH("drv_002") % 4 = 1 → ALL drv_002 updates → Partition 1
 
   Use when: "all updates for driver X must stay in order"
 
@@ -216,10 +216,10 @@ Consumer groups serve **two** purposes.
 
 Topic with 4 partitions, 3 consumers in group `"email-workers"`:
 
-Kafka assigns partitions:
-  Consumer-1 → Partition-0
-  Consumer-2 → Partition-1 AND Partition-2
-  Consumer-3 → Partition-3
+**Kafka assigns partitions:**
+- Consumer-1 → Partition-0
+- Consumer-2 → Partition-1 AND Partition-2
+- Consumer-3 → Partition-3
 
 Each consumer owns its partitions exclusively.
 Horizontal scaling: 3 consumers ≈ 3× throughput.
@@ -290,21 +290,21 @@ One write. Many consumer groups. Write once, read by many.
 
 Each group commits a **bookmark** per partition — stored in Kafka's internal topic `__consumer_offsets`.
 
-GROUP "caption-generator-group":
-  P0: committed offset = 47  (processed 0–46)
-  P1: committed offset = 51
-  P2: committed offset = 43
-  P3: committed offset = 49
+**GROUP "caption-generator-group":**
+- P0: committed offset = 47  (processed 0–46)
+- P1: committed offset = 51
+- P2: committed offset = 43
+- P3: committed offset = 49
 
-CONSUMER CRASH at offset 50 (not yet committed):
-  Last committed = 47
-  New consumer starts from 47
-  Reprocesses 47, 48, 49, 50 → at-least-once delivery
-  Consumer code must be IDEMPOTENT
+**CONSUMER CRASH at offset 50 (not yet committed):**
+- Last committed = 47
+- New consumer starts from 47
+- Reprocesses 47, 48, 49, 50 → at-least-once delivery
+- Consumer code must be IDEMPOTENT
 
-AUTO-COMMIT (default):
-  Every auto.commit.interval.ms (5s), offset advances automatically
-  Risk: message fetched but not processed → offset advances → message "lost"
+**AUTO-COMMIT (default):**
+- Every auto.commit.interval.ms (5s), offset advances automatically
+- Risk: message fetched but not processed → offset advances → message "lost"
 
 MANUAL COMMIT (recommended):
   transcodeVideo(message);
@@ -343,13 +343,13 @@ KAFKA / MESSAGE QUEUE (Pull):
   Slow consumer → messages pile up in broker
   Messages retained until TTL or ack
 
-REDIS PUB/SUB (Push):
-  Broker pushes to subscribers the moment message arrives
-  Subscriber not connected → message LOST (not stored)
+**REDIS PUB/SUB (Push):**
+- Broker pushes to subscribers the moment message arrives
+- Subscriber not connected → message LOST (not stored)
 
-Trade-off:
-  Pub/Sub: ultra-low latency, no persistence
-  Kafka:   reliable delivery, retained log
+**Trade-off:**
+- Pub/Sub: ultra-low latency, no persistence
+- Kafka:   reliable delivery, retained log
 
 ---
 
@@ -361,9 +361,9 @@ PUBLISHER:
   Returns: number of subscribers who received it NOW
   Zero subscribers → returns 0. Message gone forever.
 
-SUBSCRIBER:
-  SUBSCRIBE chat:room:42
-  Connection enters subscribe mode — waits for pushes
+**SUBSCRIBER:**
+- SUBSCRIBE chat:room:42
+- Connection enters subscribe mode — waits for pushes
 
 PATTERN SUBSCRIBE:
   PSUBSCRIBE chat:room:*
@@ -376,23 +376,23 @@ PATTERN SUBSCRIBE:
 
 ### Why Chat Needs WebSockets
 
-HTTP POLLING (bad):
-  Client asks every second: "Any messages?"
-  1M users = 1M requests/sec even when idle
-  Average ~500ms delay
-  Wasteful connection churn
+**HTTP POLLING (bad):**
+- Client asks every second: "Any messages?"
+- 1M users = 1M requests/sec even when idle
+- Average ~500ms delay
+- Wasteful connection churn
 
-WEBSOCKET (correct):
-  One persistent bidirectional connection
-  Server pushes instantly when message arrives
-  Client sends without new HTTP handshake
+**WEBSOCKET (correct):**
+- One persistent bidirectional connection
+- Server pushes instantly when message arrives
+- Client sends without new HTTP handshake
 
 ### The Horizontal Scaling Problem
 
-Room #42:
-  Rahul  → WebSocket on Server-1
-  Ankit  → WebSocket on Server-1
-  Shivam → WebSocket on Server-2
+**Room #42:**
+- Rahul  → WebSocket on Server-1
+- Ankit  → WebSocket on Server-1
+- Shivam → WebSocket on Server-2
 
 Rahul sends "Hey Shivam!" to Server-1
 Server-1 only knows its own connections (Rahul, Ankit)
@@ -419,12 +419,12 @@ sequenceDiagram
 
 Both Server-1 and Server-2 SUBSCRIBE to "chat:room:42"
 
-Rahul sends message:
-  1. Client-1 → Server-1 (WebSocket)
-  2. Server-1 → PUBLISH chat:room:42
-  3. Redis pushes to ALL subscribed servers
-  4. Server-1 → WebSocket to Rahul + Ankit
-  5. Server-2 → WebSocket to Shivam
+**Rahul sends message:**
+1. Client-1 → Server-1 (WebSocket)
+2. Server-1 → PUBLISH chat:room:42
+3. Redis pushes to ALL subscribed servers
+4. Server-1 → WebSocket to Rahul + Ankit
+5. Server-2 → WebSocket to Shivam
 
 Add Server-3, Server-4 — all subscribe. All deliver to their clients.
 Scales horizontally.
@@ -560,24 +560,24 @@ Rahul sends: "Kya haal hai bhai?"
 
   Step 1: WebSocket → Server-1
 
-  Step 2: Server-1 simultaneously:
-    a) PUBLISH Redis "chat:room:42"     (real-time)
-    b) PRODUCE Kafka "chat-messages"    (durable)
+**Step 2: Server-1 simultaneously:**
+1. a) PUBLISH Redis "chat:room:42"     (real-time)
+2. b) PRODUCE Kafka "chat-messages"    (durable)
 
-  Step 3a — Redis path (~5ms):
-    Redis → all servers subscribed to room 42
-    Server-1 → Rahul's socket
-    Server-3 → Shivam's socket
+**Step 3a — Redis path (~5ms):**
+1. Redis → all servers subscribed to room 42
+2. Server-1 → Rahul's socket
+3. Server-3 → Shivam's socket
 
-  Step 3b — Kafka path:
-    Persisted to disk
-    Consumer "persistence" → Cassandra
-    Consumer "search-indexer" → Elasticsearch
-    Consumer "notification" → push if Shivam offline
+**Step 3b — Kafka path:**
+1. Persisted to disk
+2. Consumer "persistence" → Cassandra
+3. Consumer "search-indexer" → Elasticsearch
+4. Consumer "notification" → push if Shivam offline
 
-Shivam offline 2 hours, then opens app:
-  GET /api/chat/room/42/messages → Cassandra history
-  WebSocket reconnects for new messages
+**Shivam offline 2 hours, then opens app:**
+- GET /api/chat/room/42/messages → Cassandra history
+- WebSocket reconnects for new messages
 
 WHY BOTH?
 
